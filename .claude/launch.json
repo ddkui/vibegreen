@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vibe-map",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["simple-server.js"],
+      "port": 8888
+    }
+  ]
+}

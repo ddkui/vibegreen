@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(json|toml|yaml|xml\\)$\")",
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Bash(where.exe gh *)",
+      "Bash(winget list *)"
+    ]
+  }
+}

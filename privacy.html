@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Green Luzern</title>
+    <meta name="description" content="Green Luzern Privacy Policy — how we handle your data and location information.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Override the map app's full-screen body lockout -->
+    <style>
+        html,
+        body {
+            height: auto !important;
+            overflow: auto !important;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page-header {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .page-header .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 52px 24px 80px;
+        }
+
+        .page-title {
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .last-updated {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent-light, var(--accent));
+            margin-top: 36px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-size: 0.975rem;
+        }
+
+        ul {
+            color: var(--text-secondary);
+            margin: 0 0 20px 24px;
+            font-size: 0.975rem;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--text-primary);
+        }
+
+        code {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.88em;
+            color: var(--accent-light, var(--accent));
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .highlight-box {
+            background: rgba(76, 175, 80, 0.07);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            font-size: 0.93rem;
+            color: var(--text-secondary);
+        }
+
+        .page-footer {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            text-align: center;
+            padding: 24px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .page-footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .page-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="page-header">
+        <a href="index.html" class="logo">Green Luzern</a>
+        <a href="index.html" class="back-btn">
+            <i class="ph ph-arrow-left"></i> Back to Map
+        </a>
+    </header>
+
+    <!-- Content -->
+    <main class="container">
+
+        <div class="page-title">Privacy Policy</div>
+        <div class="last-updated">Last Updated: March 2026</div>
+
+        <div class="highlight-box">
+            <strong>The short version:</strong> Green Luzern does not collect, store, or sell your personal data. Your
+            location is only ever used locally on your device to calculate directions. We use no advertising trackers or
+            cookies.
+        </div>
+
+        <h2>1. Introduction</h2>
+        <p>Welcome to Green Luzern. This Privacy Policy explains how we handle your information when you use our
+            interactive sustainability map. We are committed to protecting your personal information and your right to
+            privacy.</p>
+
+        <h2>2. Information We Collect</h2>
+        <p><strong>Location Data:</strong> If you grant permission, Green Luzern briefly accesses your device's
+            geolocation (GPS) when you click "Directions" or "Locate Me". This data is processed locally within your
+            browser and sent directly to our open-source routing provider (OSRM) solely to calculate your route.
+            <strong>We do not store, log, harvest, or track your physical location on any servers we own or
+                operate.</strong></p>
+        <p><strong>Local Storage:</strong> We use your browser's <code>localStorage</code> to save your preferences
+            (such as your preferred map layer style). This data never leaves your device and is not used for tracking or
+            profiling.</p>
+        <p><strong>No Account Required:</strong> Green Luzern does not require you to register, log in, or provide any
+            personal information such as your name or email address.</p>
+
+        <h2>3. Third-Party Services</h2>
+        <p>To provide high-quality map rendering and routing, Green Luzern relies on the following third-party
+            open-source services. These services operate under their own independent privacy policies and may log
+            anonymous web traffic data (such as IP addresses) when serving content to your browser:</p>
+        <ul>
+            <li><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank">OpenStreetMap
+                    Foundation</a> — Map tiles and geographic data</li>
+            <li><a href="http://project-osrm.org/" target="_blank">OSRM (Open Source Routing Machine)</a> — Route
+                calculation engine</li>
+            <li><a href="https://leafletjs.com/" target="_blank">Leaflet.js</a> — Open-source mapping library (runs
+                fully in your browser)</li>
+        </ul>
+
+        <h2>4. Cookies & Analytics</h2>
+        <p>Green Luzern does <strong>not</strong> use advertising cookies, cross-site tracking pixels, or third-party
+            analytics platforms (such as Google Analytics). We do not sell or share any data with advertisers or data
+            brokers.</p>
+
+        <h2>5. Data Sharing</h2>
+        <p>We do not sell, rent, or share your personal data with any third parties for commercial purposes. The only
+            data transmission that occurs is between your browser and the open-source map tile and routing servers
+            listed above, which is necessary to display the map and calculate directions.</p>
+
+        <h2>6. Your Rights</h2>
+        <p>Since we do not store personal data, there is nothing for us to delete or correct on our end. If you wish to
+            clear any locally stored preferences, you may clear your browser's local storage at any time through your
+            browser's developer tools or settings.</p>
+
+        <h2>7. Your Consent</h2>
+        <p>By using Green Luzern, you consent to this Privacy Policy. Refusing location permissions will disable the
+            routing functionality, but all other map features remain fully accessible without sharing any location data.
+        </p>
+
+        <h2>8. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Changes will be reflected on this page with an updated
+            "Last Updated" date. We encourage you to review this page periodically.</p>
+
+        <h2>9. Contact Us</h2>
+        <p>If you have questions or concerns about this Privacy Policy, please contact the Green Luzern team.</p>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <p>&copy; 2026 Green Luzern &mdash; All rights reserved &middot;
+            <a href="about.html">About</a> &middot;
+            <a href="index.html">Back to Map</a>
+        </p>
+    </footer>
+
+</body>
+
+</html>

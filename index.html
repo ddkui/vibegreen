@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- Primary SEO -->
+    <title>Green Luzern – Sustainable Map of Lucerne (Vegan, Eco‑friendly, Zero Waste)</title>
+    <meta name="description"
+        content="An interactive guide to eco-friendly, sustainable, and local businesses in and around Lucerne, including vegan dining, zero-waste shopping, eco-hotels, EV charging, and bike rentals.">
+    <meta name="keywords"
+        content="Lucerne sustainability, eco map Luzern, vegan Lucerne, zero waste Switzerland, sustainable tourism, Swisstainable, green travel, EV charging Luzern, bike rental Lucerne, drinking fountains Luzern">
+    <meta name="author" content="Green Luzern">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://greenluzern.ch/">
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Green Luzern — Sustainable City Guide & Eco Map">
+    <meta property="og:description"
+        content="Your free interactive guide to 80+ sustainable spots in Lucerne. Vegan dining, zero-waste shops, EV stations, bike rentals & more.">
+    <meta property="og:image" content="https://greenluzern.ch/logo.png">
+    <meta property="og:url" content="https://greenluzern.ch/">
+    <meta property="og:site_name" content="Green Luzern">
+    <meta property="og:locale" content="en_CH">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Green Luzern — Sustainable City Guide & Eco Map">
+    <meta name="twitter:description"
+        content="Discover 80+ eco-friendly spots in Lucerne. Free interactive map with navigation.">
+    <meta name="twitter:image" content="https://greenluzern.ch/logo.png">
+
+    <!-- PWA & Mobile -->
+    <meta name="theme-color" content="#051a0e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Green Luzern">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Structured Data (JSON-LD for Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Green Luzern",
+        "description": "Interactive sustainability map for Lucerne, Switzerland. Discover vegan dining, zero-waste shops, eco-hotels, EV charging, bike rentals, and public drinking fountains.",
+        "url": "https://greenluzern.ch/",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CHF"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "120"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Green Luzern",
+            "url": "https://greenluzern.ch/"
+        },
+        "areaServed": {
+            "@type": "City",
+            "name": "Lucerne",
+            "containedInPlace": {
+                "@type": "Country",
+                "name": "Switzerland"
+            }
+        }
+    }
+    </script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
+    <link rel="stylesheet" href="style.css?v=4">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- Critical: prevents flash of map before stylesheet loads -->
+    <style>
+        html,
+        body {
+            background: #051a0e;
+            margin: 0;
+            padding: 0;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Old Game UI Removed -->
+
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <img src="logo.png" alt="Green Luzern" class="loader-logo-img">
+            </div>
+            <div class="loader-title">Green Luzern</div>
+            <div class="loader-bar">
+                <div class="loader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <!-- Animated background orbs -->
+        <div class="lp-bg">
+            <div class="lp-orb lp-orb-1"></div>
+            <div class="lp-orb lp-orb-2"></div>
+            <div class="lp-orb lp-orb-3"></div>
+        </div>
+
+        <div class="landing-content">
+            <!-- Logo with glow halo -->
+            <div class="landing-logo-wrap">
+                <div class="landing-logo-glow"></div>
+                <img src="logo.png" alt="Green Luzern" class="landing-logo">
+            </div>
+
+            <!-- Location badge -->
+            <div class="landing-badge">🇨🇭 Greater Lucerne Region</div>
+
+            <!-- Title & slogan -->
+            <h1 class="landing-title">Your guide to a greener city</h1>
+            <p class="landing-slogan">Explore 80+ sustainable spots in Lucerne. <br>Earn rewards for learning and make a
+                real-world impact.
+            </p>
+
+            <!-- Feature pills -->
+            <div class="landing-features">
+                <div class="landing-feature">
+                    <span>🗺️</span><span>80+ Eco Spots</span>
+                </div>
+                <div class="landing-feature">
+                    <span>🧭</span><span>Turn-by-turn Nav</span>
+                </div>
+                <div class="landing-feature">
+                    <span>💧</span><span>Free Fountains</span>
+                </div>
+                <div class="landing-feature">
+                    <span>🌱</span><span>Daily Challenges</span>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div class="lp-social-wrap" style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px;">
+                <a href="https://www.instagram.com/greenluzern?igsh=MXQ3dWV4ZTc0eno4NQ==" target="_blank"
+                    class="lp-social-btn instagram">
+                    <i class="ph-bold ph-instagram-logo"></i>
+                    <span>Instagram</span>
+                </a>
+                <a href="https://x.com/greenluzern?s=11" target="_blank"
+                    class="lp-social-btn x">
+                    <i class="ph-bold ph-twitter-logo"></i>
+                    <span>X (Twitter)</span>
+                </a>
+            </div>
+
+            <!-- CTA -->
+            <div class="landing-actions">
+                <button id="start-exploring-btn" class="landing-btn">
+                    <i class="ph-bold ph-map-trifold"></i>
+                    Start Exploring
+                    <div class="landing-btn-shimmer"></div>
+                </button>
+                <button id="landing-edu-scroll-btn" class="landing-btn outline">
+                    <i class="ph-bold ph-graduation-cap"></i>
+                    Sustainability Guide
+                </button>
+            </div>
+        </div>
+
+        <!-- NEW: Full Sustainability Section on Landing Page -->
+        <div id="landing-edu-section" class="landing-edu-section">
+            <div class="edu-section-header">
+                <span class="edu-tag">Global Impact</span>
+                <h2>17 Goals for a Better World</h2>
+                <p>Every spot on Green Luzern contributes to one or more of the UN Sustainable Development Goals.</p>
+            </div>
+
+            <div class="sdg-full-grid" id="sdg-icon-grid">
+                <!-- Injected via JS for better control, but here's the structure -->
+                <div class="sdg-grid-item" data-goal="1">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/1.png" alt="Goal 1">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="2">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/2.png" alt="Goal 2">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="3">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/3.png" alt="Goal 3">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="4">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/4.png" alt="Goal 4">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="5">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/5.png" alt="Goal 5">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="6">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/6.png" alt="Goal 6">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="7">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/7.png" alt="Goal 7">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="8">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/8.png" alt="Goal 8">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="9">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/9.png" alt="Goal 9">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="10">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/10.png" alt="Goal 10">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="11">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/11.png" alt="Goal 11">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="12">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/12.png" alt="Goal 12">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="13">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/13.png" alt="Goal 13">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="14">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/14.png" alt="Goal 14">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="15">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/15.png" alt="Goal 15">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="16">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/16.png" alt="Goal 16">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+                <div class="sdg-grid-item" data-goal="17">
+                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/17.png" alt="Goal 17">
+                    <div class="sdg-learn-tip">Learn Role →</div>
+                </div>
+            </div>
+
+            <div class="edu-lessons-wrap">
+                <h3>💡 Quick Lessons</h3>
+                <div id="lp-lessons-container" class="lessons-grid">
+                    <!-- Same lessons as the modal, but directly here -->
+                </div>
+            </div>
+
+            <div class="edu-swisstainable-highlight">
+                <img src="swisstainable-logo.png" alt="Swisstainable">
+                <div>
+                    <h4>Supporting Swisstainable</h4>
+                    <p>Switzerland Tourism's Swisstainable program labels businesses that are committed to sustainable
+                        development. Green Luzern helps you identify these certified spots across the city.</p>
+                </div>
+            </div>
+
+            <!-- NEW: Guide Challenge Entry -->
+            <div class="edu-challenge-cta">
+                <div class="cta-inner">
+                    <i class="ph-bold ph-trophy"></i>
+                    <div>
+                        <h4>Ready to test your memory?</h4>
+                        <p>Memorize the map and prove you know Green Luzern's sustainable spots!</p>
+                    </div>
+                    <button id="guide-start-game-btn" class="primary-btn">Start Eco Challenge</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="landing-stats">
+            <div class="lstat">
+                <div class="lstat-num">80+</div>
+                <div class="lstat-label">Locations</div>
+            </div>
+            <div class="lstat-divider"></div>
+            <div class="lstat">
+                <div class="lstat-num">9</div>
+                <div class="lstat-label">Categories</div>
+            </div>
+            <div class="lstat-divider"></div>
+            <div class="lstat">
+                <div class="lstat-num">Free</div>
+                <div class="lstat-label">Always</div>
+            </div>
+        </div>
+        <!-- Professional Footer on Landing Page -->
+        <footer class="landing-page-footer">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="logo.png" alt="Logo" class="footer-mini-logo">
+                    <span>Green Luzern</span>
+                </div>
+                <div class="footer-social">
+                    <a href="https://www.instagram.com/greenluzern?igsh=MXQ3dWV4ZTc0eno4NQ==" target="_blank"
+                        class="footer-sc-link">
+                        <i class="ph-fill ph-instagram-logo"></i>
+                        <span>instagram</span>
+                    </a>
+                    <a href="https://x.com/greenluzern?s=11" target="_blank"
+                        class="footer-sc-link">
+                        <i class="ph-fill ph-twitter-logo"></i>
+                        <span>X (Twitter)</span>
+                    </a>
+                </div>
+                <p class="footer-cr">© 2026 Green Luzern. Built with ❤️ in Switzerland.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- SDG Lesson Modal -->
+    <div id="sdg-lesson-modal" class="modal-overlay hidden">
+        <div class="modal-content sdg-lesson-content">
+            <div class="sdg-lesson-header">
+                <div class="sdg-lesson-brand">
+                    <img id="sdg-lesson-icon" src="" alt="SDG Icon">
+                    <div class="sdg-lesson-titles">
+                        <span id="sdg-lesson-num">Goal 0</span>
+                        <h2 id="sdg-lesson-title">Title</h2>
+                    </div>
+                </div>
+                <button id="sdg-lesson-close" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="sdg-lesson-body">
+                <div class="lesson-role-box highlight-box role-box">
+                    <div class="box-text">
+                        <h4>🌎 The Global Role</h4>
+                        <p id="sdg-lesson-role">How this goal shapes our future.</p>
+                    </div>
+                </div>
+                <div class="lesson-fact-box highlight-box">
+                    <div class="box-text">
+                        <h4>💡 Fun Fact</h4>
+                        <p id="sdg-lesson-fact">Fact goes here.</p>
+                    </div>
+                </div>
+                <div class="lesson-action-box highlight-box">
+                    <div class="box-text">
+                        <h4>🎯 Make an Impact</h4>
+                        <p id="sdg-lesson-action">Action goes here.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="edu-close-action" id="sdg-lesson-complete-btn">Got it! (+1 Streak)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Screen (shown on "Start Exploring" click) -->
+    <div id="onboarding-screen" class="hidden">
+        <!-- Spinner phase -->
+        <div id="ob-spinner-wrap">
+            <div class="ob-ring ob-ring-outer"></div>
+            <div class="ob-ring ob-ring-inner"></div>
+            <img src="logo.png" alt="" class="ob-logo">
+        </div>
+        <p id="ob-tip" class="ob-tip"></p>
+
+        <!-- Welcome phase (hidden until spinner done) -->
+        <div id="ob-welcome" class="hidden">
+            <div class="ob-check">✓</div>
+            <h2 class="ob-welcome-title">Welcome to Green Luzern!</h2>
+            <p class="ob-welcome-sub">Happy exploring 🌱</p>
+        </div>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+
+    <!-- Search Bar (Google Maps style) -->
+    <div id="search-bar">
+        <div id="search-bar-main">
+            <button id="menu-btn" class="icon-btn" title="Menu">
+                <i class="ph-bold ph-list"></i>
+            </button>
+            <input type="text" id="search-input" placeholder="Search Green Luzern" autocomplete="off" />
+            
+            <button id="search-clear-btn" class="icon-btn hidden" title="Clear">
+                <i class="ph-bold ph-x"></i>
+            </button>
+
+            <!-- New Search/Location Icons -->
+            <button id="search-go-btn" class="icon-btn" title="Search">
+                <i class="ph-bold ph-magnifying-glass"></i>
+            </button>
+            <button id="search-locate-btn" class="icon-btn locate-icon" title="Your location">
+                <i class="ph-bold ph-crosshair"></i>
+            </button>
+
+            <div class="search-divider"></div>
+            <button id="directions-btn" class="icon-btn directions-icon" title="Directions">
+                <i class="ph-bold ph-directions"></i>
+            </button>
+        </div>
+        <div id="search-results"></div>
+    </div>
+
+    <!-- Sidebar Menu (Google Maps style) -->
+    <div id="sidebar-overlay" class="hidden"></div>
+    <div id="sidebar-menu" class="hidden">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="logo.png" alt="" class="sidebar-logo">
+                <h2>Green Luzern</h2>
+            </div>
+            <button id="sidebar-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="sidebar-content">
+            <div id="eco-score-widget"></div>
+            <div id="streak-widget"></div>
+            <div id="daily-challenge-widget"></div>
+            <div class="sidebar-section">
+                <h3>My Places</h3>
+                <div class="my-places-list" id="my-places-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section">
+                <h3>Eco Categories</h3>
+                <div class="categories-list" id="sidebar-categories-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-links">
+                <a href="#" class="sidebar-link" id="sidebar-edu-btn"><i class="ph ph-graduation-cap"></i>
+                    Sustainability Guide</a>
+                <a href="about.html" class="sidebar-link" target="_blank"><i class="ph ph-info"></i> About Green
+                    Luzern</a>
+                <a href="privacy.html" class="sidebar-link" target="_blank"><i class="ph ph-shield-check"></i> Privacy
+                    Policy</a>
+                <a href="#" class="sidebar-link" id="settings-btn"><i class="ph ph-gear"></i> Settings</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directions Panel (Google Maps style overlay) -->
+    <div id="directions-panel" class="hidden">
+        <div class="dir-panel-inner">
+            <!-- Header -->
+            <div class="dir-header">
+                <button id="dir-back-btn" class="icon-btn" title="Back">
+                    <i class="ph-bold ph-arrow-left"></i>
+                </button>
+                <div class="dir-inputs">
+                    <div class="dir-waypoints-line">
+                        <div class="wp-dot origin"></div>
+                        <div class="wp-line"></div>
+                        <div class="wp-dot dest"></div>
+                    </div>
+                    <div class="dir-fields">
+                        <div class="dir-field-wrap">
+                            <input type="text" id="dir-origin" placeholder="Your location" autocomplete="off" />
+                            <div id="dir-origin-results" class="dir-autocomplete"></div>
+                        </div>
+                        <div class="dir-field-wrap">
+                            <input type="text" id="dir-destination" placeholder="Choose destination"
+                                autocomplete="off" />
+                            <div id="dir-dest-results" class="dir-autocomplete"></div>
+                        </div>
+                    </div>
+                    <div class="dir-field-actions">
+                        <button id="dir-swap-btn" class="icon-btn" title="Swap">
+                            <i class="ph-bold ph-arrows-down-up"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mode Tabs (Google Maps style) -->
+            <div class="dir-modes">
+                <button class="dir-mode-tab active" data-mode="driving">
+                    <i class="ph-bold ph-car"></i>
+                    <span class="mode-eta" id="eta-driving">—</span>
+                </button>
+                <button class="dir-mode-tab" data-mode="cycling">
+                    <i class="ph-bold ph-bicycle"></i>
+                    <span class="mode-eta" id="eta-cycling">—</span>
+                </button>
+                <button class="dir-mode-tab" data-mode="walking">
+                    <i class="ph-bold ph-person-simple-walk"></i>
+                    <span class="mode-eta" id="eta-walking">—</span>
+                </button>
+            </div>
+
+            <!-- Alternative Routes -->
+            <div id="alternatives-list" class="hidden"></div>
+
+            <!-- Route Summary -->
+            <div id="route-summary" class="hidden">
+                <div class="route-main-info">
+                    <span class="route-duration" id="route-duration">—</span>
+                    <span class="route-details" id="route-details">—</span>
+                </div>
+                <div class="route-meta">
+                    <span id="route-via">—</span>
+                </div>
+            </div>
+
+            <!-- Steps -->
+            <div id="steps-list"></div>
+
+            <!-- Bottom Actions -->
+            <div id="dir-bottom-bar" class="hidden">
+                <button id="start-nav-btn" class="start-btn">
+                    <i class="ph-bold ph-navigation-arrow"></i>
+                    Start
+                </button>
+                <button id="clear-route-btn" class="secondary-btn">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Buttons (right side) -->
+    <div id="fab-stack">
+        <button id="map-edu-btn" class="fab highlight" title="Sustainability Guide">
+            <i class="ph-bold ph-graduation-cap"></i>
+        </button>
+        <button id="layers-btn" class="fab" title="Layers">
+            <i class="ph-bold ph-stack"></i>
+        </button>
+        <button id="locate-btn" class="fab" title="Your location">
+            <i class="ph-bold ph-crosshair"></i>
+        </button>
+    </div>
+
+    <!-- Layers Panel -->
+    <div id="layers-panel" class="hidden">
+        <div class="layers-header">
+            <h3>Map type</h3>
+            <button id="layers-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+        </div>
+        <div class="layers-grid">
+            <button class="layer-card active" data-style="light">
+                <div class="layer-thumb light-thumb"></div>
+                <span>Default</span>
+            </button>
+            <button class="layer-card" data-style="satellite">
+                <div class="layer-thumb sat-thumb"></div>
+                <span>Satellite</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Featured Locations Carousel -->
+    <div id="featured-carousel" class="hidden">
+        <button id="fc-close-btn" class="fc-control-btn" title="Close"><i class="ph-bold ph-x"></i></button>
+        <button id="fc-pause-btn" class="fc-control-btn" title="Pause/Play"><i class="ph-bold ph-pause"></i></button>
+        <button id="fc-prev-btn" class="fc-nav-btn prev"><i class="ph-bold ph-caret-left"></i></button>
+        <button id="fc-next-btn" class="fc-nav-btn next"><i class="ph-bold ph-caret-right"></i></button>
+        <!-- Cards injected via JS -->
+    </div>
+
+    <!-- Show Carousel FAB -->
+    <button id="fc-show-btn" class="fab hidden" title="Show featured spots">
+        <i class="ph-bold ph-play"></i>
+    </button>
+    <!-- Zoom Controls -->
+    <div id="zoom-controls">
+        <button id="zoom-in-btn" class="zoom-btn" title="Zoom in"><i class="ph-bold ph-plus"></i></button>
+        <button id="zoom-out-btn" class="zoom-btn" title="Zoom out"><i class="ph-bold ph-minus"></i></button>
+    </div>
+
+    <!-- Info Card (bottom, Google Maps style) -->
+    <div id="info-card" class="hidden">
+        <div class="info-card-content">
+            <div class="info-card-header">
+                <h3 id="info-card-title">—</h3>
+                <button id="info-card-close" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <p id="info-card-subtitle" class="info-subtitle">—</p>
+            <div id="info-sdg-container" class="info-sdg-row"></div>
+            <div class="info-card-actions">
+                <button class="info-action" id="info-directions-btn">
+                    <i class="ph-bold ph-directions"></i>
+                    <span>Directions</span>
+                </button>
+                <button class="info-action" id="info-saved-btn">
+                    <i class="ph ph-heart"></i>
+                    <span>Save</span>
+                </button>
+                <button class="info-action" id="info-visited-btn">
+                    <i class="ph ph-check-circle"></i>
+                    <span>Visited</span>
+                </button>
+                <button class="info-action" id="info-share-btn">
+                    <i class="ph-bold ph-share-network"></i>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-container"></div>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About Green Luzern</h2>
+                <button id="about-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <h3>Discover the sustainable side of the city</h3>
+                <p>Green Luzern is your dedicated interactive guide to finding eco-friendly, sustainable, and local
+                    businesses in and around Lucerne, Switzerland.</p>
+                <p>Whether you are looking for vegan dining, zero-waste shopping, eco-hotels, or practical stops like EV
+                    charging stations and bike rentals, our map makes it effortless to navigate the green best of the
+                    region.</p>
+                <p>Join us in promoting Swisstainable tourism and supporting local initiatives that make a positive
+                    impact on our environment.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggest a Spot FAB -->
+    <button id="suggest-btn" title="Suggest a sustainable spot">
+        <i class="ph-bold ph-plus"></i>
+        <span>Suggest a Spot</span>
+    </button>
+
+    <!-- Suggest a Spot Modal -->
+    <div id="suggest-modal" class="modal-overlay hidden">
+        <div class="modal-content suggest-modal-content">
+            <div class="modal-header">
+                <h2>🌱 Suggest a Sustainable Spot</h2>
+                <button id="suggest-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="suggest-intro">Know a great eco-friendly place that's missing from our map? Share it with the
+                    community — we'll review it and add it!</p>
+                <form id="suggest-form" novalidate>
+                    <div class="form-group">
+                        <label for="sg-name">Place Name <span class="req">*</span></label>
+                        <input type="text" id="sg-name" placeholder="e.g. Unverpackt Luzern" required maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="sg-address">Address <span class="req">*</span></label>
+                        <input type="text" id="sg-address" placeholder="e.g. Bundesplatz 10, 6003 Luzern" required
+                            maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="sg-category">Category <span class="req">*</span></label>
+                        <select id="sg-category" required>
+                            <option value="" disabled selected>Choose a category…</option>
+                            <option value="vegan">🌱 Vegan Dining</option>
+                            <option value="zero-waste">♻️ Zero Waste</option>
+                            <option value="eco-hotel">🏨 Eco-Hotels</option>
+                            <option value="activity">🎟️ Eco Activities</option>
+                            <option value="secondhand">👕 Second Hand</option>
+                            <option value="ev-charging">⚡ EV Charging</option>
+                            <option value="bike-rental">🚲 Bike Rental</option>
+                            <option value="swisstainable">🇨🇭 Swisstainable</option>
+                            <option value="drinking-water">💧 Drinking Water</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sg-desc">Why is it sustainable? <span class="req">*</span></label>
+                        <textarea id="sg-desc" rows="3" placeholder="Tell the community what makes this place special…"
+                            required maxlength="400"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="sg-submitter">Your name (optional)</label>
+                        <input type="text" id="sg-submitter" placeholder="Anonymous Scout" maxlength="60">
+                    </div>
+                    <div id="suggest-status" class="suggest-status hidden"></div>
+                    <button type="submit" class="suggest-submit-btn" id="suggest-submit-btn">
+                        <i class="ph-bold ph-paper-plane-tilt"></i>
+                        Submit for Review
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings</h2>
+                <button id="settings-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="modal-body settings-body">
+                <div class="settings-group">
+                    <label>Map Style</label>
+                    <div class="st-options">
+                        <button class="st-btn active" data-style="light">Voyager (Light)</button>
+                        <button class="st-btn" data-style="satellite">Satellite</button>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <label>Distance Units</label>
+                    <div class="st-options">
+                        <button class="st-btn active" data-unit="metric">Kilometers (km)</button>
+                        <button class="st-btn" data-unit="imperial">Miles (mi)</button>
+                    </div>
+                </div>
+
+                <div class="settings-group danger-zone">
+                    <label>Data Management</label>
+                    <p class="st-desc">This will erase your visited spots, current eco-score, and daily streaks from
+                        this device.</p>
+                    <button class="st-danger-btn" id="st-reset-data">
+                        <i class="ph-bold ph-trash"></i> Reset My Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Education Modal (SDG & Swisstainable) -->
+    <div id="edu-modal" class="modal-overlay hidden">
+        <div class="modal-content edu-modal-content">
+            <div class="modal-header">
+                <h2>🌎 Sustainability Guide</h2>
+                <button id="edu-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="edu-section">
+                    <h3>🇺🇳 UN Sustainable Development Goals (SDG)</h3>
+                    <p>Green Luzern supports the United Nations' 2030 Agenda. We focus on these key goals to make our
+                        city better:</p>
+                    <div class="sdg-track-container">
+                        <div id="sdg-track" class="sdg-track">
+                             <!-- Dynamically populated with all 17 Goals -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="edu-divider"></div>
+
+        <div class="edu-section">
+            <h3>🇨🇭 Swisstainable Program</h3>
+            <p>Switzerland Tourism's sustainability program recognizes businesses committed to the environment.
+                Look for these levels on our map:</p>
+            <div class="swiss-levels">
+                <div class="swiss-level">
+                    <div class="sl-icon">I</div>
+                    <div class="sl-text"><strong>Level I – committed:</strong> Organizations that commit to
+                        sustainable business management.</div>
+                </div>
+                <div class="swiss-level">
+                    <div class="sl-icon">II</div>
+                    <div class="sl-text"><strong>Level II – engaged:</strong> Organizations with a recognized
+                        sustainability certification.</div>
+                </div>
+                <div class="swiss-level">
+                    <div class="sl-icon">III</div>
+                    <div class="sl-text"><strong>Level III – leading:</strong> For organizations with a
+                        comprehensive sustainability certification.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="edu-divider"></div>
+
+        <div class="edu-section">
+            <h3>💡 Mini Lessons</h3>
+            <p>Learn a quick fact and boost your streak!</p>
+            <div id="edu-lessons-container" class="lessons-grid">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="edu-close-action" id="edu-close-bottom-btn">Got it, let's explore!</button>
+    </div>
+    </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="data.js?v=2"></script>
+    <!-- Immersive Lesson Page (Premium Slide-based deep dive) -->
+    <div id="lesson-page" class="hidden">
+        <div class="lesson-page-nav">
+            <button id="lesson-page-back" class="icon-btn"><i class="ph ph-arrow-left"></i> Back to Guide</button>
+            <div class="lesson-page-brand">Global Goals Deep-Dive</div>
+        </div>
+
+        <div class="lesson-page-container">
+            <!-- Fixed Left Hero -->
+            <header class="lp-hero">
+                <div class="lp-hero-content">
+                    <img id="lp-goal-icon" src="" alt="Goal Icon">
+                    <div class="lp-hero-titles">
+                        <span id="lp-goal-num">Goal 11</span>
+                        <h1 id="lp-goal-title">Sustainable Cities</h1>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Horizontal Carousel -->
+            <main class="lp-main" id="lp-main-carousel">
+                <!-- Slide 1: Role -->
+                <section class="lp-section">
+                    <div class="lp-section-icon"><i class="ph ph-globe-hemisphere-west"></i></div>
+                    <div class="lp-section-text">
+                        <h3>Global Focus</h3>
+                        <p id="lp-goal-role"></p>
+                    </div>
+                </section>
+
+                <!-- Slide 2: Fact -->
+                <section class="lp-section highlight-alt">
+                    <div class="lp-section-icon"><i class="ph ph-lightbulb"></i></div>
+                    <div class="lp-section-text">
+                        <h3>Did You Know?</h3>
+                        <p id="lp-goal-fact" class="lp-fact-text"></p>
+                    </div>
+                </section>
+
+                <!-- Slide 3: Targets -->
+                <section class="lp-section">
+                    <div class="lp-section-icon"><i class="ph ph-target"></i></div>
+                    <div class="lp-section-text">
+                        <h3>Key UN Targets</h3>
+                        <div id="lp-goal-targets" class="lp-targets-grid">
+                            <!-- Injected -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Slide 4: Progress -->
+                <section class="lp-section status-card">
+                    <div class="lp-section-icon"><i class="ph ph-chart-line-up"></i></div>
+                    <div class="lp-section-text">
+                        <h3>2024 Global Status</h3>
+                        <p id="lp-goal-progress" class="lp-progress-text"></p>
+                    </div>
+                </section>
+
+                <!-- Slide 5: Challenges -->
+                <section class="lp-section">
+                    <div class="lp-section-icon"><i class="ph ph-warning-diamond"></i></div>
+                    <div class="lp-section-text">
+                        <h3>Main Challenges</h3>
+                        <ul id="lp-goal-challenges" class="lp-challenges-list">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Slide 6: Action -->
+                <section class="lp-section action-card">
+                    <div class="lp-section-icon"><i class="ph ph-hands-clapping"></i></div>
+                    <div class="lp-section-text">
+                        <h3>What You Can Do</h3>
+                        <p id="lp-goal-action"></p>
+                    </div>
+                    <div class="lp-action-footer">
+                        <button id="lp-complete-btn">🎯 Mark Lesson Complete</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Eco Challenge Game: Start/Memorize/Results Modal -->
+    <div id="game-modal" class="hidden">
+        <div class="game-modal-card">
+            <div id="game-intro-view">
+                <h2>Eco Memory Challenge</h2>
+                <p>You have <strong>5 minutes</strong> to memorize all sustainable locations marked on the map. After that, they will disappear, and you'll have to name them from memory!</p>
+                <button id="game-start-btn" class="primary-btn" style="width:100%">Start Challenge</button>
+            </div>
+            
+            <div id="game-results-view" class="hidden">
+                <div class="game-score-card">
+                    <span class="game-score-label">Your Final Score</span>
+                    <span id="game-final-score" class="game-score-num">0 / 0</span>
+                </div>
+                <h3>Great Effort!</h3>
+                <p id="game-feedback">You're becoming a local sustainability expert.</p>
+                <button id="game-replay-btn" class="primary-btn" style="width:100%">Play Again</button>
+                <button id="game-exit-btn" class="secondary-btn" style="width:100%; margin-top:12px; height:auto; border-radius:12px; padding:12px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recall Interface (Bottom Panel) -->
+    <div id="game-recall-panel" class="hidden">
+        <h3>Memory Test</h3>
+        <p>Type the names of the locations you recall:</p>
+        <div id="game-recall-inputs" class="game-recall-inputs">
+            <!-- Inputs generated by JS -->
+        </div>
+        <button id="game-submit-btn" class="primary-btn" style="width:100%">Submit Final Answers</button>
+    </div>
+
+    <script src="app.js?v=4"></script>
+</body>
+
+</html>

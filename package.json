@@ -1,0 +1,8 @@
+{
+  "name": "green-luzern",
+  "version": "1.0.0",
+  "description": "Sustainable Map of Lucerne",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.9.0"
+  }
+}

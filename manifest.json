@@ -1,0 +1,21 @@
+{
+    "name": "Green Luzern — Sustainable City Guide",
+    "short_name": "Green Luzern",
+    "description": "Discover 80+ eco-friendly spots in Lucerne. Vegan dining, zero-waste shops, EV charging, bike rentals & more.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#051a0e",
+    "theme_color": "#051a0e",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["travel", "lifestyle", "navigation"],
+    "lang": "en",
+    "dir": "ltr"
+}

@@ -1,0 +1,52 @@
+{
+  "treibhaus": {
+    "lat": 47.042506,
+    "lng": 8.3192252
+  },
+  "seebad-luzern": {
+    "lat": 47.0545942,
+    "lng": 8.3186361
+  },
+  "lido-luzern": {
+    "lat": 47.0498217,
+    "lng": 8.3360087
+  },
+  "strandbad-tribschen": {
+    "lat": 47.040515,
+    "lng": 8.3289023
+  },
+  "waldbad-zimmeregg": null,
+  "plant-luzern": {
+    "lat": 47.0484139,
+    "lng": 8.3050783
+  },
+  "sentitreff": {
+    "lat": 47.0518987,
+    "lng": 8.2973555
+  },
+  "gartenhaus": {
+    "lat": 47.0592823,
+    "lng": 8.2850958
+  },
+  "cafe-voliere": {
+    "lat": 47.0493353,
+    "lng": 8.3136462
+  },
+  "pinakarri": {
+    "lat": 47.0550786,
+    "lng": 8.309719
+  },
+  "alnatura-luzern": null,
+  "oakberry": {
+    "lat": 47.0311143,
+    "lng": 8.4239269
+  },
+  "lucerne-festival": {
+    "lat": 47.0502965,
+    "lng": 8.3121117
+  },
+  "neubad": {
+    "lat": 47.0411783,
+    "lng": 8.3070641
+  }
+}
