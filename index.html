@@ -446,12 +446,12 @@
                     </div>
                     <div class="dir-fields">
                         <div class="dir-field-wrap">
-                            <input type="text" id="dir-origin" placeholder="Your location" autocomplete="off" />
+                            <input type="text" id="dir-origin" placeholder="Choose starting point" aria-label="Starting point" autocomplete="off" />
                             <div id="dir-origin-results" class="dir-autocomplete"></div>
                         </div>
                         <div class="dir-field-wrap">
                             <input type="text" id="dir-destination" placeholder="Choose destination"
-                                autocomplete="off" />
+                                aria-label="Destination" autocomplete="off" />
                             <div id="dir-dest-results" class="dir-autocomplete"></div>
                         </div>
                     </div>
@@ -464,16 +464,17 @@
             </div>
 
             <!-- Mode Tabs (Google Maps style) -->
+            <button id="dir-use-location" class="dir-location-button">Use your location</button>
             <div class="dir-modes">
-                <button class="dir-mode-tab active" data-mode="driving">
+                <button class="dir-mode-tab active" data-mode="driving" aria-label="Driving routes">
                     <i class="ph-bold ph-car"></i>
                     <span class="mode-eta" id="eta-driving">—</span>
                 </button>
-                <button class="dir-mode-tab" data-mode="cycling">
+                <button class="dir-mode-tab" data-mode="cycling" aria-label="Cycling routes">
                     <i class="ph-bold ph-bicycle"></i>
                     <span class="mode-eta" id="eta-cycling">—</span>
                 </button>
-                <button class="dir-mode-tab" data-mode="walking">
+                <button class="dir-mode-tab" data-mode="walking" aria-label="Walking routes">
                     <i class="ph-bold ph-person-simple-walk"></i>
                     <span class="mode-eta" id="eta-walking">—</span>
                 </button>
@@ -491,6 +492,7 @@
                 <div class="route-meta">
                     <span id="route-via">—</span>
                 </div>
+                <p id="route-service-note" class="route-options-note"></p>
             </div>
 
             <!-- Steps -->
@@ -895,7 +897,8 @@
         <button id="game-submit-btn" class="primary-btn" style="width:100%">Submit Final Answers</button>
     </div>
 
-    <script src="app.js?v=7"></script>
+    <script src="routing.js?v=1"></script>
+    <script src="app.js?v=8"></script>
     <script src="landing-motion.js?v=1"></script>
 </body>
 

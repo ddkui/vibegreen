@@ -3,9 +3,9 @@
 
     // ── Config ─────────────────────────────────────────
     const MODE = {
-        driving: { profile: 'driving', speed: null, color: '#4285f4', label: 'Drive', icon: 'ph-car' },
-        cycling: { profile: 'driving', speed: 16, color: '#34a853', label: 'Cycle', icon: 'ph-bicycle' },
-        walking: { profile: 'driving', speed: 5, color: '#fbbc04', label: 'Walk', icon: 'ph-person-simple-walk' },
+        driving: { color: '#4285f4', label: 'Drive', icon: 'ph-car' },
+        cycling: { color: '#34a853', label: 'Cycle', icon: 'ph-bicycle' },
+        walking: { color: '#b88315', label: 'Walk', icon: 'ph-person-simple-walk' },
     };
 
     const TILES = {
@@ -80,6 +80,7 @@
     // ── Helpers ────────────────────────────────────────
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     function fmt(m) { return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`; }
     function dur(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h} hr ${m} min` : `${m} min`; }
@@ -790,47 +791,35 @@
     });
 
     // ── Directions Panel ───────────────────────────────
+    dom.dirPanel.inert = true;
     dom.directionsBtn.addEventListener('click', () => openDirections());
     dom.dirBack.addEventListener('click', () => closeDirections());
 
     function openDirections() {
         S.dirOpen = true;
+        dom.dirPanel.inert = false;
+        document.body.classList.add('planning-route');
         dom.dirPanel.classList.remove('hidden');
         $('#search-bar').style.display = 'none';
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.add('strip-hidden');
-        dom.dirDest.focus();
-
-        // Auto-set origin to user's location (silent, non-blocking)
-        if (!S.origin && navigator.geolocation) {
-            dom.dirOrigin.value = 'Getting your location…';
-            dom.dirOrigin.disabled = true;
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    const { latitude: lat, longitude: lng } = pos.coords;
-                    dom.dirOrigin.disabled = false;
-                    // Place user dot on map
-                    if (S.userMarker) map.removeLayer(S.userMarker);
-                    S.userMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
-                        zIndexOffset: 1000,
-                    }).addTo(map);
-                    setPoint('origin', lat, lng, 'Your location');
-                },
-                () => {
-                    // If denied/unavailable, clear the placeholder and let user type
-                    dom.dirOrigin.disabled = false;
-                    dom.dirOrigin.value = '';
-                    dom.dirOrigin.placeholder = 'Choose starting point';
-                    dom.dirOrigin.focus();
-                },
-                { enableHighAccuracy: true, timeout: 8000 }
-            );
-        }
+        (S.origin ? dom.dirDest : dom.dirOrigin).focus();
     }
+
+    $('#dir-use-location').addEventListener('click', () => {
+        if (!navigator.geolocation) { toast('Location unavailable. Choose a starting point.', 'info'); return; }
+        const revision = routeRevision;
+        navigator.geolocation.getCurrentPosition(pos => {
+            if (!S.dirOpen || revision !== routeRevision) return;
+            if (pos.coords.accuracy > 60) { toast('Location is imprecise. Choose a starting point or retry outdoors.', 'info'); return; }
+            setPoint('origin', pos.coords.latitude, pos.coords.longitude, 'Your location');
+        }, () => toast('Location unavailable. Choose a starting point.', 'info'), { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+    });
 
     function closeDirections() {
         S.dirOpen = false;
+        dom.dirPanel.inert = true;
+        document.body.classList.remove('planning-route');
         dom.dirPanel.classList.add('hidden');
         $('#search-bar').style.display = '';
         const strip = document.getElementById('progress-strip');
@@ -863,29 +852,50 @@
 
     // ── Autocomplete for dir inputs ────────────────────
     function setupDirAC(input, dropdown, type) {
-        let t;
-        input.addEventListener('input', () => {
-            clearTimeout(t);
+        let searchRevision = 0;
+        const showResults = data => {
+            dropdown.innerHTML = data.map(d => `<button type="button" class="dir-ac-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${escapeHTML(d.display_name)}"><i class="ph ph-map-pin" aria-hidden="true"></i><span class="dir-ac-name">${escapeHTML(d.display_name)}</span></button>`).join('');
+            dropdown.classList.toggle('visible', data.length > 0);
+            dropdown.querySelectorAll('.dir-ac-item').forEach(el => el.addEventListener('click', () => {
+                searchRevision++;
+                setPoint(type, +el.dataset.lat, +el.dataset.lon, el.dataset.name);
+                dropdown.classList.remove('visible');
+            }));
+        };
+        const localResults = q => SUSTAINABLE_LOCATIONS.filter(loc => `${loc.name} ${loc.address}`.toLowerCase().includes(q.toLowerCase())).slice(0, 5).map(loc => ({ lat: loc.lat, lon: loc.lng, display_name: `${loc.name}, ${loc.address}` }));
+        const search = async () => {
             const q = input.value.trim();
-            if (q.length < 2) { dropdown.classList.remove('visible'); return; }
-            t = setTimeout(async () => {
-                const data = await geocode(q, 5);
-                if (!data.length) { dropdown.classList.remove('visible'); return; }
-                dropdown.innerHTML = data.map(d => `
-                    <div class="dir-ac-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${d.display_name.split(',')[0].replace(/"/g, '&quot;')}">
-                        <i class="ph ph-map-pin"></i>
-                        <span class="dir-ac-name">${d.display_name.split(',').slice(0, 2).join(', ')}</span>
-                    </div>`).join('');
-                dropdown.classList.add('visible');
-                dropdown.querySelectorAll('.dir-ac-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        setPoint(type, +el.dataset.lat, +el.dataset.lon, el.dataset.name);
-                        dropdown.classList.remove('visible');
-                    });
-                });
-            }, 350);
+            if (q.length < 2) return;
+            const revision = ++searchRevision;
+            const local = localResults(q);
+            if (local.length) { showResults(local); return; }
+            try {
+                const results = await geocode(q, 5);
+                if (revision !== searchRevision || q !== input.value.trim()) return;
+                showResults(results);
+                if (!results.length) toast('No address found. Try a full address or pick a point on the map.', 'info');
+            } catch { if (revision === searchRevision) toast('Address search unavailable. Pick a point on the map.', 'error'); }
+        };
+        const findButton = document.createElement('button');
+        findButton.type = 'button';
+        findButton.className = 'dir-find-button';
+        findButton.textContent = 'Find';
+        findButton.setAttribute('aria-label', type === 'origin' ? 'Find starting point' : 'Find destination');
+        input.parentElement.appendChild(findButton);
+        findButton.addEventListener('click', search);
+        input.addEventListener('input', () => {
+            searchRevision++;
+            S[type === 'origin' ? 'origin' : 'dest'] = null;
+            const markerKey = type === 'origin' ? 'originMarker' : 'destMarker';
+            if (S[markerKey]) { map.removeLayer(S[markerKey]); S[markerKey] = null; }
+            invalidateRoutes();
+            const q = input.value.trim();
+            showResults(q.length >= 2 ? localResults(q) : []);
         });
-        input.addEventListener('keydown', e => { if (e.key === 'Escape') dropdown.classList.remove('visible'); });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { searchRevision++; dropdown.classList.remove('visible'); }
+            if (e.key === 'Enter') { e.preventDefault(); search(); }
+        });
         document.addEventListener('click', e => { if (!e.target.closest('.dir-field-wrap')) dropdown.classList.remove('visible'); });
     }
     setupDirAC(dom.dirOrigin, dom.dirOriginAC, 'origin');
@@ -894,8 +904,9 @@
     // ── Swap ───────────────────────────────────────────
     dom.dirSwap.addEventListener('click', () => {
         const o = S.origin, d = S.dest;
-        if (o) setPoint('dest', o.lat, o.lng, o.name); else { S.dest = null; dom.dirDest.value = ''; if (S.destMarker) { map.removeLayer(S.destMarker); S.destMarker = null; } }
-        if (d) setPoint('origin', d.lat, d.lng, d.name); else { S.origin = null; dom.dirOrigin.value = ''; if (S.originMarker) { map.removeLayer(S.originMarker); S.originMarker = null; } }
+        clearRoute();
+        if (d) setPoint('origin', d.lat, d.lng, d.name);
+        if (o) setPoint('dest', o.lat, o.lng, o.name);
     });
 
     // ── Mode Tabs ──────────────────────────────────────
@@ -906,57 +917,61 @@
             dom.modeTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             if (S.allRouteData[S.mode]) renderActiveState(true);
+            else { clearMapRoutes(); dom.routeSummary.classList.add('hidden'); dom.dirBottom.classList.add('hidden'); dom.stepsList.innerHTML = ''; dom.alternativesList.classList.remove('hidden'); dom.alternativesList.textContent = 'No route available for this mode. Choose another mode or change the endpoints.'; }
         });
     });
 
     // ── Fetch all modes at once (Google Maps style) ───
+    let routeController;
+    let routeRevision = 0;
+    function invalidateRoutes() {
+        routeRevision++;
+        routeController?.abort();
+        S.allRouteData = {};
+        clearMapRoutes();
+        dom.routeSummary.classList.add('hidden');
+        dom.dirBottom.classList.add('hidden');
+        dom.alternativesList.classList.add('hidden');
+        dom.stepsList.innerHTML = '';
+        dom.etaDriving.textContent = '—'; dom.etaCycling.textContent = '—'; dom.etaWalking.textContent = '—';
+    }
     async function fetchAllModes() {
         if (!S.origin || !S.dest) return;
-        S.allRouteData = {};
+        invalidateRoutes();
+        const revision = routeRevision;
+        routeController = new AbortController();
+        const controller = routeController;
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        const signal = routeController.signal;
+        const origin = { ...S.origin }, destination = { ...S.dest };
 
         // Show loading ETAs
         dom.etaDriving.textContent = '...';
         dom.etaCycling.textContent = '...';
         dom.etaWalking.textContent = '...';
 
-        const { lat: oLat, lng: oLng } = S.origin;
-        const { lat: dLat, lng: dLng } = S.dest;
-
         try {
-            // Include alternatives=true to get multiple paths
-            const url = `https://router.project-osrm.org/route/v1/driving/${oLng},${oLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-
-            if (data.code !== 'Ok' || !data.routes?.length) {
-                toast('No route found', 'error');
-                dom.etaDriving.textContent = '—';
-                dom.etaCycling.textContent = '—';
-                dom.etaWalking.textContent = '—';
+            const modes = Object.entries(MODE);
+            const results = await Promise.allSettled(modes.map(([key]) => GreenRouting.fetchRoutes(origin, destination, key, signal)));
+            if (revision !== routeRevision) return;
+            results.forEach((result, index) => {
+                const [key, cfg] = modes[index];
+                if (result.status === 'fulfilled') S.allRouteData[key] = result.value.map(route => ({ route, duration: route.duration, distM: route.distance, cfg }));
+            });
+            dom.etaDriving.textContent = S.allRouteData.driving ? durShort(S.allRouteData.driving[0].duration) : '—';
+            dom.etaCycling.textContent = S.allRouteData.cycling ? durShort(S.allRouteData.cycling[0].duration) : '—';
+            dom.etaWalking.textContent = S.allRouteData.walking ? durShort(S.allRouteData.walking[0].duration) : '—';
+            if (!S.allRouteData[S.mode]) {
+                dom.alternativesList.classList.remove('hidden');
+                dom.alternativesList.textContent = 'Routing unavailable for this mode. Try another mode or retry your endpoints.';
                 return;
             }
-
-            // Calculate for each mode using the primary route (or all alternatives)
-            for (const [key, cfg] of Object.entries(MODE)) {
-                const routes = data.routes.map((r, idx) => {
-                    const duration = cfg.speed ? (r.distance / 1000) / cfg.speed * 3600 : r.duration;
-                    return { route: r, duration, distM: r.distance, cfg };
-                });
-                S.allRouteData[key] = routes;
-            }
-
-            // Update ETA pills using the first route of each mode
-            dom.etaDriving.textContent = durShort(S.allRouteData.driving[0].duration);
-            dom.etaCycling.textContent = durShort(S.allRouteData.cycling[0].duration);
-            dom.etaWalking.textContent = durShort(S.allRouteData.walking[0].duration);
 
             S.activeRouteIdx = 0;
             renderActiveState(true);
 
-        } catch (err) {
-            console.error('Routing error:', err);
-            toast('Routing failed', 'error');
-        }
+        } catch (err) { if (revision === routeRevision) toast('Routing unavailable. Please try again.', 'error'); }
+        finally { clearTimeout(timeout); }
     }
 
     function renderActiveState(fit = false) {
@@ -1036,28 +1051,30 @@
 
         // Fit bounds only if requested (e.g. first search, not just toggling alternative)
         if (fit) {
-            map.fitBounds(S.routeLine.getBounds(), { padding: [60, 60], duration: 1 });
+            const size = map.getSize();
+            const panel = dom.dirPanel.getBoundingClientRect();
+            const mobile = size.x <= 768;
+            map.fitBounds(S.routeLine.getBounds(), {
+                paddingTopLeft: [mobile ? 30 : panel.width + 30, 40],
+                paddingBottomRight: [30, mobile ? panel.height + 20 : 30], duration: 1
+            });
         }
     }
 
     // ── Render Alternatives Panel ──────────────────────
     function renderAlternativesUI(routes) {
-        if (routes.length <= 1) {
-            dom.alternativesList.classList.add('hidden');
-            return;
-        }
-
         dom.alternativesList.classList.remove('hidden');
-        dom.alternativesList.innerHTML = routes.map((rd, i) => {
+        dom.alternativesList.innerHTML = `<p class="route-options-note">${routes.length > 1 ? `${routes.length} routes available · select one` : 'One route available · no alternative returned'}</p>` + routes.map((rd, i) => {
             const via = findMainRoad(rd.route);
+            const extra = rd.duration - routes[0].duration;
             return `
-                <div class="route-card ${i === S.activeRouteIdx ? 'active' : ''}" data-idx="${i}" data-mode="${S.mode}">
+                <button type="button" class="route-card ${i === S.activeRouteIdx ? 'active' : ''}" aria-pressed="${i === S.activeRouteIdx}" data-idx="${i}" data-mode="${S.mode}">
                     <div class="route-card-header">
                         <span class="route-card-duration">${durShort(rd.duration)}</span>
                         <span class="route-card-dist">${fmt(rd.distM)}</span>
                     </div>
-                    <div class="route-card-via">${via ? 'via ' + via : 'Alternative route'}</div>
-                </div>
+                    <div class="route-card-via">${via ? 'via ' + escapeHTML(via) : `Route ${i + 1}`} · ${i === 0 ? 'Fastest estimate' : extra < 60 ? 'Similar time' : `+${durShort(extra)}`}</div>
+                </button>
             `;
         }).join('');
 
@@ -1077,6 +1094,13 @@
         dom.routeDetails.textContent = `${fmt(rd.distM)}`;
         const mainRoad = findMainRoad(rd.route);
         dom.routeVia.textContent = mainRoad ? `via ${mainRoad}` : '';
+        const points = rd.route.geometry.coordinates;
+        const startGap = distM([S.origin.lat, S.origin.lng], [points[0][1], points[0][0]]);
+        const last = points[points.length - 1];
+        const endGap = distM([S.dest.lat, S.dest.lng], [last[1], last[0]]);
+        $('#route-service-note').textContent = Math.max(startGap, endGap) > 100
+            ? 'Route ends at the nearest accessible road or path. Check the final approach.'
+            : 'Estimated time · no live traffic. Routes: Valhalla / OpenStreetMap.';
         dom.routeSummary.classList.remove('hidden');
 
         buildSteps(rd.route, cfg);
@@ -1100,6 +1124,7 @@
     }
 
     function clearRoute() {
+        invalidateRoutes();
         clearMapRoutes();
         if (S.originMarker) { map.removeLayer(S.originMarker); S.originMarker = null; }
         if (S.destMarker) { map.removeLayer(S.destMarker); S.destMarker = null; }
@@ -1119,6 +1144,7 @@
     // ═══════════════════════════════════════════════════
     const NAV = {
         active: false,
+        mode: 'driving',
         watchId: null,
         routeCoords: [],   // [[lat,lng], ...] full route
         passedIdx: 0,      // index of the last passed point
@@ -1130,6 +1156,11 @@
         steps: [],         // OSRM steps for instruction display
         stepIdx: 0,        // current step
         destCoord: null,   // [lat, lng] destination
+        routeDuration: 0,
+        routeDistance: 0,
+        offRouteReadings: 0,
+        rerouting: false,
+        generation: 0,
     };
 
     /* distance in metres between two [lat,lng] points */
@@ -1138,23 +1169,6 @@
         const dLat = toR(b[0] - a[0]), dLon = toR(b[1] - a[1]);
         const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a[0])) * Math.cos(toR(b[0])) * Math.sin(dLon / 2) ** 2;
         return 2 * R * Math.asin(Math.sqrt(h));
-    }
-
-    /* nearest point index on route coords to a [lat,lng] */
-    function nearestIdx(coords, pos) {
-        let best = 0, bestD = Infinity;
-        for (let i = 0; i < coords.length; i++) {
-            const d = distM(coords[i], pos);
-            if (d < bestD) { bestD = d; best = i; }
-        }
-        return { idx: best, d: bestD };
-    }
-
-    /* Haversine remaining distance along remaining coords */
-    function remainingDistance(coords, fromIdx) {
-        let d = 0;
-        for (let i = fromIdx; i < coords.length - 1; i++) d += distM(coords[i], coords[i + 1]);
-        return d;
     }
 
     /* build nav HUD overlay if not present */
@@ -1190,6 +1204,7 @@
     }
 
     function stopNavigation() {
+        NAV.generation++;
         if (NAV.watchId != null) navigator.geolocation.clearWatch(NAV.watchId);
         clearTimeout(NAV.rerouteTimer);
         if (NAV.linePassed) { map.removeLayer(NAV.linePassed); NAV.linePassed = null; }
@@ -1217,14 +1232,21 @@
         // Close sidebar & directions panel
         if (S.sidebarOpen) dom.sidebarClose.click();
         dom.dirPanel.classList.add('hidden');
+        dom.dirPanel.inert = true;
+        document.body.classList.remove('planning-route');
         $('#search-bar').style.display = 'none';
 
         const rd = S.allRouteData[S.mode][S.activeRouteIdx];
+        NAV.mode = S.mode;
         NAV.routeCoords = rd.route.geometry.coordinates.map(c => [c[1], c[0]]);
         NAV.steps = rd.route.legs[0]?.steps || [];
         NAV.stepIdx = 0;
         NAV.passedIdx = 0;
         NAV.destCoord = NAV.routeCoords[NAV.routeCoords.length - 1];
+        NAV.routeDuration = rd.duration;
+        NAV.routeDistance = rd.distM;
+        NAV.offRouteReadings = 0;
+        NAV.generation++;
         NAV.active = true;
 
         // Remove old static route lines
@@ -1235,8 +1257,8 @@
         NAV.lineRemain = L.polyline(NAV.routeCoords, { color: MODE[S.mode].color, weight: 7, opacity: 1, lineJoin: 'round' }).addTo(map);
 
         ensureNavHUD();
-        updateNavHUD({ instruction: NAV.steps[0]?.maneuver?.instruction || 'Head towards destination' });
-        toast('Navigation started! 🚗', 'success');
+        updateNavHUD({ instruction: getStepInstruction(NAV.steps[0]), etaSec: rd.duration, remainM: rd.distM });
+        toast(`${MODE[S.mode].label} navigation started`, 'success');
 
         NAV.watchId = navigator.geolocation.watchPosition(onNavPosition,
             () => toast('GPS signal lost', 'error'),
@@ -1246,8 +1268,13 @@
 
     function onNavPosition(pos) {
         if (!NAV.active) return;
-        const { latitude: lat, longitude: lng, speed } = pos.coords;
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
         const userPos = [lat, lng];
+        if (!Number.isFinite(accuracy) || accuracy > 60) {
+            NAV.offRouteReadings = 0;
+            updateNavHUD({ instruction: 'Waiting for a more accurate GPS position…' });
+            return;
+        }
 
         // Move user arrow
         if (NAV.arrowMarker) map.removeLayer(NAV.arrowMarker);
@@ -1260,11 +1287,13 @@
         map.setView(userPos, Math.max(map.getZoom(), 16), { animate: true, duration: 0.6 });
 
         // Find nearest point on route
-        const { idx, d } = nearestIdx(NAV.routeCoords, userPos);
+        const match = GreenRouting.nearestOnRoute(NAV.routeCoords, userPos);
+        const { idx, d } = match;
 
         // Off-route? reroute after 30m deviation and 5s cooldown
         const now = Date.now();
-        if (d > 30 && now - NAV.lastRerouteTime > 5000) {
+        NAV.offRouteReadings = d > Math.max(35, accuracy * 1.5) ? NAV.offRouteReadings + 1 : 0;
+        if (NAV.offRouteReadings >= 2 && !NAV.rerouting && now - NAV.lastRerouteTime > 15000) {
             NAV.lastRerouteTime = now;
             toast('Off route — recalculating…', 'info', 3000);
             rerouteFrom(lat, lng);
@@ -1275,27 +1304,31 @@
         if (idx > NAV.passedIdx) NAV.passedIdx = idx;
 
         // Split route into passed (gray) and remaining (colored)
-        const passed = NAV.routeCoords.slice(0, NAV.passedIdx + 1).concat([userPos]);
-        const remain = [userPos].concat(NAV.routeCoords.slice(NAV.passedIdx + 1));
+        const passed = NAV.routeCoords.slice(0, idx + 1).concat([match.point]);
+        const remain = [match.point].concat(NAV.routeCoords.slice(idx + 1));
         NAV.linePassed.setLatLngs(passed);
         NAV.lineRemain.setLatLngs(remain);
 
         // Advance step
-        const step = NAV.steps[NAV.stepIdx];
+        while (NAV.stepIdx < NAV.steps.length - 1) {
+            const location = NAV.steps[NAV.stepIdx + 1].maneuver.location;
+            const turn = GreenRouting.nearestOnRoute(NAV.routeCoords, [location[1], location[0]]);
+            if (turn.remaining < match.remaining - Math.min(8, accuracy / 2)) break;
+            NAV.stepIdx++;
+        }
+        const step = NAV.steps[Math.min(NAV.stepIdx + 1, NAV.steps.length - 1)];
         if (step) {
             const stepLoc = [step.maneuver.location[1], step.maneuver.location[0]];
-            const distToStep = distM(userPos, stepLoc);
-            if (distToStep < 20 && NAV.stepIdx < NAV.steps.length - 1) NAV.stepIdx++;
-            const nextStep = NAV.steps[NAV.stepIdx];
-            const instruction = getStepInstruction(nextStep);
-            const remainM = remainingDistance(NAV.routeCoords, NAV.passedIdx);
-            const modeSpeed = MODE[S.mode].speed || 13.9; // m/s
-            const etaSec = remainM / modeSpeed;
+            const turn = GreenRouting.nearestOnRoute(NAV.routeCoords, stepLoc);
+            const distToStep = Math.max(0, match.remaining - turn.remaining);
+            const instruction = getStepInstruction(step);
+            const remainM = match.remaining;
+            const etaSec = GreenRouting.remainingTime(NAV.steps, NAV.stepIdx, distToStep);
             updateNavHUD({ instruction, distToStep, etaSec, remainM });
         }
 
         // Arrived?
-        if (distM(userPos, NAV.destCoord) < 25) {
+        if (accuracy <= 25 && match.remaining < 50 && distM(userPos, NAV.destCoord) < 20) {
             toast('You have arrived! 🎉', 'success', 5000);
             stopNavigation();
         }
@@ -1303,6 +1336,7 @@
 
     function getStepInstruction(step) {
         if (!step) return 'Continue towards destination';
+        if (step.maneuver?.instruction) return step.maneuver.instruction;
         const m = step.maneuver;
         const type = m?.type || 'continue';
         const mod = m?.modifier || '';
@@ -1314,22 +1348,27 @@
     }
 
     async function rerouteFrom(lat, lng) {
-        if (!NAV.active || !S.dest) return;
+        if (!NAV.active || !S.dest || NAV.rerouting) return;
+        NAV.rerouting = true;
+        const generation = NAV.generation;
+        const mode = NAV.mode;
         try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${S.dest.lng},${S.dest.lat}?overview=full&geometries=geojson&steps=true`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.code !== 'Ok' || !data.routes?.length) { toast('Reroute failed', 'error'); return; }
-            const r = data.routes[0];
+            const routes = await GreenRouting.fetchRoutes({ lat, lng }, S.dest, mode, AbortSignal.timeout(15000), 0);
+            if (!NAV.active || generation !== NAV.generation) return;
+            const r = routes[0];
             NAV.routeCoords = r.geometry.coordinates.map(c => [c[1], c[0]]);
             NAV.steps = r.legs[0]?.steps || [];
             NAV.stepIdx = 0;
             NAV.passedIdx = 0;
             NAV.lastRerouteTime = Date.now();
+            NAV.routeDuration = r.duration;
+            NAV.routeDistance = r.distance;
+            NAV.offRouteReadings = 0;
             NAV.linePassed.setLatLngs([]);
             NAV.lineRemain.setLatLngs(NAV.routeCoords);
             toast('Route updated ✓', 'success', 2000);
-        } catch { toast('Reroute failed', 'error'); }
+        } catch { if (NAV.active && generation === NAV.generation) toast('Reroute unavailable. Keeping the current route.', 'error'); }
+        finally { NAV.rerouting = false; }
     }
 
     dom.startNavBtn.addEventListener('click', startNavigation);
@@ -1356,13 +1395,14 @@
             const m = s.maneuver, type = m.type || 'continue', mod = m.modifier || '';
             const icon = modIcons[mod] || dirIcons[type] || 'ph-arrow-up';
             let text;
-            if (type === 'depart') text = `Head on <strong>${s.name || 'the road'}</strong>`;
+            if (m.instruction) text = escapeHTML(m.instruction);
+            else if (type === 'depart') text = `Head on <strong>${escapeHTML(s.name || 'the road')}</strong>`;
             else if (type === 'arrive') text = `Arrive at <strong>destination</strong>`;
             else {
                 const act = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : 'Continue';
-                text = s.name ? `${act} on <strong>${s.name}</strong>` : `${act}`;
+                text = s.name ? `${escapeHTML(act)} on <strong>${escapeHTML(s.name)}</strong>` : escapeHTML(act);
             }
-            const stepDur = cfg.speed ? durShort((s.distance / 1000) / cfg.speed * 3600) : durShort(s.duration);
+            const stepDur = durShort(s.duration);
             return `<div class="step-item" data-lat="${m.location[1]}" data-lng="${m.location[0]}">
                 <div class="step-icon"><i class="ph ${icon}"></i></div>
                 <div class="step-content">
