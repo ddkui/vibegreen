@@ -1843,10 +1843,10 @@
                 // Show SDG Badges
                 if (loc.sdg && loc.sdg.length > 0) {
                     dom.infoSdg.innerHTML = loc.sdg.map(num => `
-                        <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png" 
-                             class="sdg-mini-icon" 
-                             title="Goal ${num}"
-                             onclick="showSdgLesson(${num})">
+                        <button class="sdg-badge" data-goal="${num}" aria-label="Learn about Goal ${num}">
+                            <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png"
+                                 class="sdg-mini-icon" alt="Goal ${num}">
+                        </button>
                     `).join('');
                 } else {
                     dom.infoSdg.innerHTML = '';
@@ -2136,6 +2136,8 @@
         // if (locId || (lat && lng)) window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    let showSdgLesson;
+    let refreshLessons;
     const initEduModal = () => {
         const LESSONS = [
             { 
@@ -2269,28 +2271,13 @@
                     btn.addEventListener('click', (e) => {
                         const card = e.target.closest('.lesson-card');
                         const goalNum = card.dataset.goal;
-                        const id = card.dataset.id;
-
-                        // Show the detailed modal
-                        if (typeof showSdgLesson === 'function') {
-                            showSdgLesson(goalNum);
-                        }
-
-                        // Mark as preliminary learned for streak but keep button active for repeat learning
-                        const learnedArr = JSON.parse(localStorage.getItem('vibemap_learned') || '[]');
-                        if (!learnedArr.includes(id)) {
-                            learnedArr.push(id);
-                            localStorage.setItem('vibemap_learned', JSON.stringify(learnedArr));
-                            recordVisitToday();
-                            renderStreak();
-                            toast(`🌟 Goal ${goalNum} explored! Streak updated.`, 'success');
-                            renderLessons();
-                        }
+                        showSdgLesson(goalNum);
                     });
                 });
             });
         };
 
+        refreshLessons = renderLessons;
         // Render initially for landing page
         renderLessons();
 
@@ -2535,9 +2522,15 @@
 
         renderTrack();
 
+        let returnFocus;
+        let returnToModal = false;
+        let returnToLanding = false;
         const showSdg = (num) => {
             const data = SDG_LESSONS[num];
             if (!data) return;
+            returnFocus = document.activeElement;
+            returnToModal = !dom.eduModal.classList.contains('hidden');
+            returnToLanding = !dom.landingPage.classList.contains('hidden');
 
             dom.lessonPage.style.setProperty('--hero-color', `var(--goal-${num})`);
             dom.lpGoalIcon.src = `https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png`;
@@ -2561,26 +2554,52 @@
 
             // Animations and visibility
             dom.eduModal.classList.add('hidden'); // Hide the guide while deep dive is open
+            dom.landingPage.inert = true;
+            dom.landingPage.classList.add('hidden');
+            setMapAccessibility(false);
             dom.lessonPage.classList.remove('hidden');
             dom.lessonPage.scrollTo(0, 0);
+            dom.lessonBack.focus({ preventScroll: true });
 
             // Set current goal for completion
             dom.lpCompleteBtn.onclick = () => {
+                const learned = JSON.parse(localStorage.getItem('vibemap_learned') || '[]');
+                const id = `p${num}`;
+                if (!learned.includes(id)) {
+                    learned.push(id);
+                    localStorage.setItem('vibemap_learned', JSON.stringify(learned));
+                }
                 recordVisitToday();
                 renderStreak();
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.7 }, colors: ['#10b981', '#ffffff'] });
-                }
                 toast(`🎯 Lesson Complete! Streak updated.`, 'success');
                 hideSdgPage();
+                refreshLessons();
             };
         };
 
+        showSdgLesson = showSdg;
+
         const hideSdgPage = () => {
             dom.lessonPage.classList.add('hidden');
-            dom.eduModal.classList.remove('hidden'); // Restore guide
+            dom.landingPage.inert = false;
+            if (returnToLanding) dom.landingPage.classList.remove('hidden');
+            if (returnToModal) dom.eduModal.classList.remove('hidden');
+            setMapAccessibility(dom.landingPage.classList.contains('hidden'));
+            returnFocus?.focus({ preventScroll: true });
         };
         dom.lessonBack.addEventListener('click', hideSdgPage);
+        dom.lessonPage.addEventListener('keydown', event => {
+            if (event.key === 'Escape') hideSdgPage();
+        });
+
+        document.getElementById('sdg-icon-grid').addEventListener('click', event => {
+            const tile = event.target.closest('[data-goal]');
+            if (tile) showSdg(tile.dataset.goal);
+        });
+        dom.infoSdg.addEventListener('click', event => {
+            const badge = event.target.closest('[data-goal]');
+            if (badge) showSdg(badge.dataset.goal);
+        });
 
         dom.sdgTrack.addEventListener('click', (e) => {
             const card = e.target.closest('.sdg-card');

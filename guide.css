@@ -151,6 +151,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .sdg-grid-item { background: #fff; border: 1px solid #d1d8cd; border-radius: 4px; padding: 12px; }
 .sdg-grid-item:hover { transform: none; background: #edf0e7; box-shadow: none; }
 .sdg-learn-tip { color: #245d43; }
+.sdg-badge { display: inline-flex; padding: 0; border: 0; background: transparent; }
 .edu-lessons-wrap { padding: 20px 0; background: transparent; }
 .edu-lessons-wrap h3 { color: #23382d; }
 .guide-back { padding: 12px 0; color: #245d43; text-decoration: underline; text-underline-offset: 4px; margin-bottom: 20px; }
