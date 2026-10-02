@@ -75,6 +75,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,7 +92,7 @@
     <link rel="apple-touch-icon" href="logo.png">
 
     <link rel="stylesheet" href="style.css?v=5">
-    <link rel="stylesheet" href="guide.css?v=1">
+    <link rel="stylesheet" href="guide.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
     <!-- Critical: prevents flash of map before stylesheet loads -->
@@ -138,7 +140,7 @@
             <section class="guide-hero" aria-labelledby="guide-title">
                 <div class="guide-intro">
                     <p class="guide-eyebrow">Luzern &amp; the surrounding region</p>
-                    <h1 id="guide-title">A little local<br>knowledge goes<br>a long way.</h1>
+                    <h1 id="guide-title"><span class="title-line">A little local</span><span class="title-line">knowledge goes</span><span class="title-line">a long way.</span></h1>
                     <p class="guide-deck">A secondhand find. A plant-based lunch. Somewhere to refill your bottle. Find your next stop in and around Luzern.</p>
                     <button id="start-exploring-btn" class="guide-primary">Explore the map <i class="ph ph-arrow-up-right" aria-hidden="true"></i></button>
                     <p class="guide-small">Free to browse. No account needed.</p>
@@ -529,7 +531,7 @@
         <div class="layers-grid">
             <button class="layer-card active" data-style="light">
                 <div class="layer-thumb light-thumb"></div>
-                <span>Default</span>
+                <span>Streets</span>
             </button>
             <button class="layer-card" data-style="satellite">
                 <div class="layer-thumb sat-thumb"></div>
@@ -773,6 +775,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
     <script src="data.js?v=2"></script>
     <!-- Immersive Lesson Page (Premium Slide-based deep dive) -->
     <div id="lesson-page" class="hidden">
@@ -891,7 +895,8 @@
         <button id="game-submit-btn" class="primary-btn" style="width:100%">Submit Final Answers</button>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
+    <script src="landing-motion.js?v=1"></script>
 </body>
 
 </html>

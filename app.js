@@ -12,6 +12,46 @@
         light: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
         satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' },
     };
+    const STREET_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+    const STREET_ATTRIBUTION = '<a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+    // Keep Leaflet's existing places, routes, and controls over a crisp vector basemap.
+    function createStreetLayer(onFallback = () => {}) {
+        const raster = () => L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 });
+        if (!window.maplibregl || !L.maplibreGL) return raster();
+        try {
+            const context = document.createElement('canvas').getContext('webgl2');
+            if (!context) return raster();
+            context.getExtension('WEBGL_lose_context')?.loseContext();
+        } catch { return raster(); }
+
+        const vector = L.maplibreGL({ style: STREET_STYLE, attributionControl: { customAttribution: STREET_ATTRIBUTION } });
+        const group = L.layerGroup([vector]);
+        let loadTimer;
+        let fellBack = false;
+        let active = false;
+        const fallback = () => {
+            if (fellBack || !active) return;
+            fellBack = true;
+            clearTimeout(loadTimer);
+            group.removeLayer(vector);
+            const fallbackLayer = raster();
+            fallbackLayer.on('tileerror', event => group.fire('tileerror', event));
+            group.addLayer(fallbackLayer);
+            onFallback();
+        };
+        group.on('add', () => {
+            active = true;
+            if (fellBack) return;
+            const gl = vector.getMaplibreMap();
+            gl.once('load', () => clearTimeout(loadTimer));
+            gl.once('webglcontextlost', fallback);
+            gl.once('error', () => setTimeout(fallback, 0));
+            loadTimer = setTimeout(() => { if (!gl.isStyleLoaded()) fallback(); }, 12000);
+        });
+        group.on('remove', () => { active = false; clearTimeout(loadTimer); });
+        return group;
+    }
 
     // ── State ──────────────────────────────────────────
     const S = {
@@ -347,13 +387,16 @@
     const map = L.map('map', {
         center: [47.0480, 8.3200], zoom: 12, zoomControl: false,
         attributionControl: true, minZoom: 2, maxZoom: 18, worldCopyJump: true,
+        maxBounds: [[-85, -180], [85, 180]], maxBoundsViscosity: 1,
     });
 
     let tileLayer;
     function setMapStyle(key) {
         S.tileKey = Object.hasOwn(TILES, key) ? key : 'light';
         if (tileLayer) map.removeLayer(tileLayer);
-        tileLayer = L.tileLayer(TILES[S.tileKey].url, { attribution: TILES[S.tileKey].attr, maxZoom: 19 });
+        tileLayer = S.tileKey === 'light'
+            ? createStreetLayer(() => toast('Using the standard street map while the vector map is unavailable.', 'info'))
+            : L.tileLayer(TILES.satellite.url, { attribution: TILES.satellite.attr, maxZoom: 19 });
         if (dom.landingPage.classList.contains('hidden')) tileLayer.addTo(map);
         tileLayer.on('tileerror', () => {
             document.getElementById('map-result-count').textContent = 'Map tiles are unavailable. You can still search the guide.';
@@ -364,8 +407,8 @@
 
     // ── Loading ────────────────────────────────────────
     setTimeout(() => {
-        dom.loadingScreen.classList.add('done');
-        setTimeout(() => dom.loadingScreen.remove(), 500);
+        dom.loadingScreen.remove();
+        document.body.classList.add('guide-ready');
     }, 150);
 
     // ── Search ─────────────────────────────────────────
@@ -1684,7 +1727,7 @@
             S.ecoMarkers.find(item => item.loc.id === button.dataset.guideLocation)?.marker.fire('click');
         }));
         const preview = L.map('landing-map', { center: [47.051, 8.308], zoom: 14, zoomControl: false, scrollWheelZoom: false, dragging: false, touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
-        const previewTiles = L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 }).addTo(preview);
+        const previewTiles = createStreetLayer().addTo(preview);
         previewTiles.on('tileerror', () => {
             document.querySelector('.guide-map-caption > span:first-child').textContent = 'Map preview unavailable. Explore the listings in the full guide.';
         });

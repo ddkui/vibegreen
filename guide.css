@@ -38,6 +38,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .guide-hero { display: grid; grid-template-columns: 1fr 1.12fr; gap: 64px; align-items: center; padding: 64px 0 70px; }
 .guide-eyebrow { font-size: 12px; letter-spacing: .11em; text-transform: uppercase; font-weight: 600; color: #536259; }
 .guide-intro h1 { font-family: 'Newsreader', Georgia, serif; font-size: clamp(46px, 4.8vw, 76px); font-weight: 400; line-height: .99; letter-spacing: -.04em; margin: 26px 0 24px; }
+.guide-intro h1 .title-line { display: block; }
+@keyframes guide-arrive {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .guide-ready .guide-header { animation: guide-arrive .65s .12s both; }
+    .guide-ready .guide-intro > .guide-eyebrow { animation: guide-arrive .65s .22s both; }
+    .guide-ready .title-line { animation: guide-arrive .85s cubic-bezier(.2,.65,.3,1) both; }
+    .title-line:nth-child(1) { animation-delay: .28s; }
+    .title-line:nth-child(2) { animation-delay: .38s; }
+    .title-line:nth-child(3) { animation-delay: .48s; }
+    .guide-ready .guide-deck { animation: guide-arrive .75s .55s both; }
+    .guide-ready .guide-primary, .guide-ready .guide-small { animation: guide-arrive .7s .65s both; }
+    .guide-ready .guide-map-wrap { animation: guide-arrive 1s .4s both; }
+    .guide-section-heading, .guide-category, .guide-pick, .guide-note { transition: opacity .65s var(--reveal-delay, 0ms), transform .65s var(--reveal-delay, 0ms); }
+    .reveal-pending { opacity: 0; transform: translateY(18px); }
+    .reveal-pending:focus-within { opacity: 1; transform: none; }
+    .guide-primary i, .guide-map-link i, .guide-category > i:last-child, .pick-link i { transition: transform .2s ease; }
+    .guide-primary:hover i, .guide-category:hover > i:last-child, .guide-pick:hover .pick-link i { transform: translate(3px, -3px); }
+    .guide-map-link:hover i { transform: translateX(4px); }
+}
 .guide-deck { font-size: 19px; line-height: 1.5; max-width: 370px; color: #536259; }
 .guide-primary { display: inline-flex; align-items: center; gap: 35px; background: #245d43; color: #fff; font-size: 17px; font-weight: 600; padding: 15px 22px; border-radius: 4px; margin-top: 28px; transition: background .15s; }
 .guide-primary:hover { background: #163e2c; }
