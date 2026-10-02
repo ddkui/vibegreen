@@ -9,7 +9,7 @@
     };
 
     const TILES = {
-        light: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attr: '© OpenStreetMap © CARTO' },
+        light: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
         satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' },
     };
 
@@ -28,7 +28,6 @@
         markers: [],
         tileKey: 'light',
         dirOpen: false,
-        layersOpen: false,
         layersOpen: false,
         sidebarOpen: false,
         activeCategories: new Set(), // empty = show all; selecting a category = filter to that category
@@ -347,16 +346,27 @@
     // ── Map Init ───────────────────────────────────────
     const map = L.map('map', {
         center: [47.0480, 8.3200], zoom: 12, zoomControl: false,
-        attributionControl: false, minZoom: 2, maxZoom: 18, worldCopyJump: true,
+        attributionControl: true, minZoom: 2, maxZoom: 18, worldCopyJump: true,
     });
 
-    let tileLayer = L.tileLayer(TILES[S.tileKey].url, { attribution: TILES[S.tileKey].attr, maxZoom: 19 }).addTo(map);
+    let tileLayer;
+    function setMapStyle(key) {
+        S.tileKey = Object.hasOwn(TILES, key) ? key : 'light';
+        if (tileLayer) map.removeLayer(tileLayer);
+        tileLayer = L.tileLayer(TILES[S.tileKey].url, { attribution: TILES[S.tileKey].attr, maxZoom: 19 });
+        if (dom.landingPage.classList.contains('hidden')) tileLayer.addTo(map);
+        tileLayer.on('tileerror', () => {
+            document.getElementById('map-result-count').textContent = 'Map tiles are unavailable. You can still search the guide.';
+        });
+        dom.layerCards.forEach(card => card.classList.toggle('active', card.dataset.style === S.tileKey));
+    }
+    setMapStyle(getSettings().style);
 
     // ── Loading ────────────────────────────────────────
     setTimeout(() => {
         dom.loadingScreen.classList.add('done');
         setTimeout(() => dom.loadingScreen.remove(), 500);
-    }, 1400);
+    }, 150);
 
     // ── Search ─────────────────────────────────────────
     let searchTimer = null;
@@ -381,6 +391,20 @@
 
     async function doSearch(q) {
         if (!q) return;
+        const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const matches = SUSTAINABLE_LOCATIONS.filter(loc => `${loc.name} ${loc.address} ${CATEGORIES[loc.category].label}`.toLowerCase().includes(q.toLowerCase()));
+        if (matches.length) {
+            dom.searchResults.innerHTML = matches.slice(0, 8).map(loc => `<button class="sr-item" data-search-place="${escape(loc.id)}"><span class="sr-icon"><i class="ph ph-map-pin" aria-hidden="true"></i></span><span class="sr-text"><span class="sr-name">${escape(loc.name)}</span><span class="sr-detail">${escape(loc.address)}</span></span></button>`).join('');
+            dom.searchResults.classList.add('visible');
+            dom.searchResults.querySelectorAll('[data-search-place]').forEach(button => button.addEventListener('click', () => {
+                S.activeCategories.clear();
+                updateEcoMarkers();
+                S.ecoMarkers.find(item => item.loc.id === button.dataset.searchPlace)?.marker.fire('click');
+                dom.searchResults.classList.remove('visible');
+                dom.searchInput.value = matches.find(loc => loc.id === button.dataset.searchPlace).name;
+            }));
+            return;
+        }
         try {
             const data = await geocode(q, 6);
             if (!data.length) {
@@ -652,7 +676,10 @@
 
     // ── Settings Modal ─────────────────────────────────
     function getSettings() {
-        return JSON.parse(localStorage.getItem('vibemap_settings') || '{"style":"dark","unit":"metric"}');
+        try {
+            const settings = JSON.parse(localStorage.getItem('vibemap_settings') || '{}') || {};
+            return { ...settings, style: Object.hasOwn(TILES, settings.style) ? settings.style : 'light', unit: settings.unit || 'metric' };
+        } catch { return { style: 'light', unit: 'metric' }; }
     }
 
     function saveSettings(s) {
@@ -690,8 +717,7 @@
             const current = getSettings();
             if (btn.dataset.style) {
                 current.style = btn.dataset.style;
-                S.tileKey = current.style;
-                tileLayer.setUrl(TILES[S.tileKey].url); // Live update map
+                setMapStyle(current.style);
             }
             if (btn.dataset.unit) {
                 current.unit = btn.dataset.unit;
@@ -1360,7 +1386,7 @@
     // ── Search Action ──
     dom.searchGoBtn.addEventListener('click', () => {
         const query = dom.searchInput.value.trim();
-        if (query) runSearch(query);
+        if (query) { clearTimeout(searchTimer); doSearch(query); }
     });
     
 
@@ -1382,8 +1408,8 @@
             S.tileKey = key;
             dom.layerCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            map.removeLayer(tileLayer);
-            tileLayer = L.tileLayer(TILES[key].url, { attribution: TILES[key].attr, maxZoom: 19 }).addTo(map);
+            setMapStyle(key);
+            saveSettings({ ...getSettings(), style: key });
             toast(`Map: ${key.charAt(0).toUpperCase() + key.slice(1)}`, 'info', 1500);
         });
     });
@@ -1599,20 +1625,80 @@
     // Landing Page Navigation
     if (dom.startExploringBtn) {
         dom.startExploringBtn.addEventListener('click', () => {
-            dom.landingPage.classList.add('hidden');
-            startEcoGame();
+            openGuideMap();
         });
     }
 
-    if (dom.guideStartGameBtn) {
-        dom.guideStartGameBtn.addEventListener('click', () => {
-            dom.landingPage.classList.add('hidden');
-            startEcoGame();
+    function openGuideMap(category) {
+        dom.landingPage.classList.add('hidden');
+        setMapAccessibility(true);
+        if (category) {
+            S.activeCategories.clear();
+            S.activeCategories.add(category);
+        }
+        updateEcoMarkers();
+        map.invalidateSize();
+        if (!map.hasLayer(tileLayer)) tileLayer.addTo(map);
+        if (category) {
+            const locations = SUSTAINABLE_LOCATIONS.filter(loc => loc.category === category);
+            if (locations.length) map.fitBounds(locations.map(loc => [loc.lat, loc.lng]), { padding: [65, 150], maxZoom: 14 });
+        }
+        dom.menuBtn.focus({ preventScroll: true });
+    }
+
+    function setMapAccessibility(visible) {
+        document.body.classList.toggle('guide-open', !visible);
+        document.querySelectorAll('#map, #map-categories, #map-result-count, #search-bar, #fab-stack, #zoom-controls, #suggest-btn').forEach(el => el.inert = !visible);
+    }
+
+    function initLocalGuide() {
+        setMapAccessibility(false);
+        const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        document.querySelectorAll('[data-location-count]').forEach(el => el.textContent = SUSTAINABLE_LOCATIONS.length);
+        document.querySelectorAll('[data-category-count]').forEach(el => el.textContent = Object.keys(CATEGORIES).length);
+        document.getElementById('landing-categories').innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
+            <button class="guide-category" data-guide-category="${key}"><i class="ph ${cat.icon}" aria-hidden="true"></i><span>${escape(cat.label)}</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></button>`).join('');
+        document.querySelectorAll('[data-guide-category]').forEach(button => button.addEventListener('click', () => openGuideMap(button.dataset.guideCategory)));
+        document.querySelectorAll('[data-open-map]').forEach(button => button.addEventListener('click', () => openGuideMap()));
+        document.getElementById('map-categories').innerHTML = '<button data-map-category="all" aria-pressed="true">All places</button>' + Object.entries(CATEGORIES).map(([key, cat]) => `
+            <button data-map-category="${key}" aria-pressed="false"><i class="ph ${cat.icon}" aria-hidden="true"></i>${escape(cat.label)}</button>`).join('');
+        document.querySelectorAll('[data-map-category]').forEach(button => button.addEventListener('click', () => {
+            S.activeCategories.clear();
+            if (button.dataset.mapCategory !== 'all') S.activeCategories.add(button.dataset.mapCategory);
+            updateEcoMarkers();
+            const visible = SUSTAINABLE_LOCATIONS.filter(loc => S.activeCategories.size === 0 || S.activeCategories.has(loc.category));
+            if (visible.length) map.fitBounds(visible.map(loc => [loc.lat, loc.lng]), { padding: [65, 150], maxZoom: 14 });
+        }));
+        const pickIds = ['karls-kraut', 'the-secondhand', 'neubad'];
+        const picks = pickIds.map(id => SUSTAINABLE_LOCATIONS.find(loc => loc.id === id)).filter(Boolean);
+        const descriptions = {
+            'karls-kraut': 'Plant-based food by the Reuss.',
+            'the-secondhand': 'A stop for secondhand clothing.',
+            'neubad': 'A former swimming pool, now a cultural meeting place.'
+        };
+        document.getElementById('local-picks').innerHTML = picks.map((loc, index) => `
+            <button class="guide-pick" data-guide-location="${escape(loc.id)}"><span class="pick-number">0${index + 1}</span><span class="guide-eyebrow">${escape(CATEGORIES[loc.category].label)}</span><h3>${escape(loc.name)}</h3><p>${escape(descriptions[loc.id])}</p><span class="pick-address">${escape(loc.address)}</span><span class="pick-link">Find on the map <i class="ph ph-arrow-up-right" aria-hidden="true"></i></span></button>`).join('');
+        document.querySelectorAll('[data-guide-location]').forEach(button => button.addEventListener('click', () => {
+            S.activeCategories.clear();
+            openGuideMap();
+            S.ecoMarkers.find(item => item.loc.id === button.dataset.guideLocation)?.marker.fire('click');
+        }));
+        const preview = L.map('landing-map', { center: [47.051, 8.308], zoom: 14, zoomControl: false, scrollWheelZoom: false, dragging: false, touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
+        const previewTiles = L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 }).addTo(preview);
+        previewTiles.on('tileerror', () => {
+            document.querySelector('.guide-map-caption > span:first-child').textContent = 'Map preview unavailable. Explore the listings in the full guide.';
         });
+        SUSTAINABLE_LOCATIONS.filter(loc => loc.lat > 47.035 && loc.lat < 47.068 && loc.lng > 8.29 && loc.lng < 8.34).forEach(loc => {
+            const cat = CATEGORIES[loc.category];
+            L.circleMarker([loc.lat, loc.lng], { radius: 5, color: '#ffffff', weight: 2, fillColor: cat.color, fillOpacity: 1, interactive: false }).addTo(preview);
+        });
+        new ResizeObserver(() => preview.invalidateSize()).observe(document.getElementById('landing-map'));
+        updateEcoMarkers();
     }
 
     // ── Keyboard Shortcuts ─────────────────────────────
     document.addEventListener('keydown', e => {
+        if (!dom.landingPage.classList.contains('hidden')) return;
         if (e.target.tagName === 'INPUT') {
             if (e.key === 'Escape') { e.target.blur(); dom.searchResults.classList.remove('visible'); }
             return;
@@ -1684,6 +1770,7 @@
             const saved = savedSet.has(loc.id);
 
             const marker = L.marker([loc.lat, loc.lng], {
+                title: loc.name, alt: loc.name,
                 icon: L.divIcon({
                     className: '',
                     html: buildChipHTML(catInfo, visited, saved),
@@ -1778,6 +1865,13 @@
 
     function updateEcoMarkers() {
         const showAll = S.activeCategories.size === 0;
+        document.querySelectorAll('[data-map-category]').forEach(button => {
+            const active = button.dataset.mapCategory === 'all' ? showAll : S.activeCategories.has(button.dataset.mapCategory);
+            button.setAttribute('aria-pressed', String(active));
+        });
+        dom.categoriesList.querySelectorAll('.category-item').forEach(item => item.classList.toggle('active', S.activeCategories.has(item.dataset.cat)));
+        const count = SUSTAINABLE_LOCATIONS.filter(loc => showAll || S.activeCategories.has(loc.category)).length;
+        document.getElementById('map-result-count').textContent = `${count} ${count === 1 ? 'place' : 'places'} in the guide`;
         S.ecoMarkers.forEach(({ loc, marker }) => {
             // Only show markers if not in eco game study phase
             if (!S.ecoGameActive) {
@@ -1953,11 +2047,13 @@
     // ── Deep Linking ───────────────────────────────────
     function parseUrlParams() {
         const params = new URLSearchParams(window.location.search);
+        if (params.get('map') === '1') openGuideMap();
         const locId = params.get('loc');
         const lat = params.get('lat');
         const lng = params.get('lng');
 
         if (locId) {
+            openGuideMap();
             const loc = SUSTAINABLE_LOCATIONS.find(l => l.id === locId);
             if (loc) {
                 // Delay to ensure loading screen hide and app init
@@ -1978,6 +2074,7 @@
                 }, 2000);
             }
         } else if (lat && lng) {
+            openGuideMap();
             const pLat = parseFloat(lat);
             const pLng = parseFloat(lng);
             if (!isNaN(pLat) && !isNaN(pLng)) {
@@ -2109,30 +2206,13 @@
             const html = LESSONS.map(lesson => {
                 const isLearned = learned.includes(lesson.id);
                 return `
-                    <div class="lesson-card ${isLearned ? 'completed' : ''}" data-id="${lesson.id}" data-goal="${lesson.goal}">
-                        <div class="lesson-card-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-                            <div class="lesson-goal goal-${lesson.goal}" style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${lesson.goal}</div>
-                            <h4 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: white;">${lesson.title}</h4>
-                        </div>
-                        <div class="lesson-content" style="display: flex; flex-direction: column;">
-                            <p class="lesson-summary" style="font-weight: 700; font-size: 1.05rem; color: var(--accent-light); margin: 0 0 20px 0; letter-spacing: 0.01em; line-height: 1.6;">${lesson.summary}</p>
-                            
-                            <div class="status-2024" style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--red); padding: 16px 20px; border-radius: 8px; margin: 0 0 24px 0;">
-                                <strong style="color: #fca5a5; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; display: inline-block; margin-bottom: 8px;">🚨 2024 Global Status Alert</strong>
-                                <span style="display: block; font-size: 1.05rem; line-height: 1.6; color: rgba(255,255,255,0.95);">${lesson.status2024}</span>
-                            </div>
-
-                            <p style="line-height: 1.7; margin: 0 0 24px 0; opacity: 0.9; font-size: 1.05rem;">${lesson.text}</p>
-
-                            <div class="lesson-fact" style="background: rgba(255,255,255,0.04); padding: 16px; border-radius: 12px; border-left: 4px solid var(--accent); font-style: italic; color: var(--accent-light); font-size: 0.95rem; margin: 0 0 24px 0; line-height: 1.5;">✨ ${lesson.fact}</div>
-                            
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; flex-wrap: wrap; gap: 16px;">
-                                <small style="opacity: 0.6; font-size: 0.85rem;">Verified UN DESA Data • Goal ${lesson.goal}</small>
-                                <button class="lesson-btn" style="padding: 12px 28px; font-size: 0.95rem; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">Learn More →</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                    <article class="lesson-card ${isLearned ? 'completed' : ''}" data-id="${lesson.id}" data-goal="${lesson.goal}">
+                        <span class="guide-eyebrow">Goal ${lesson.goal}</span>
+                        <h4>${lesson.title}</h4>
+                        <p>${lesson.summary}</p>
+                        <div class="lesson-actions"><button class="lesson-btn">Explore this goal →</button>
+                        <a href="https://sdgs.un.org/goals/goal${lesson.goal}" target="_blank" rel="noopener noreferrer">UN source ↗</a></div>
+                    </article>`;
             }).join('');
 
             // Inject into both modal and landing page section
@@ -2201,6 +2281,8 @@
 
             // 4. Show landing page and scroll to section
             dom.landingPage.classList.remove('hidden');
+            setMapAccessibility(false);
+            document.getElementById('landing-edu-section').classList.remove('hidden');
             const section = document.getElementById('landing-edu-section');
             if (section) {
                 // Short timeout to ensure display:none is gone before scrolling
@@ -2575,6 +2657,8 @@
 
         const startMemorizationPhase = () => {
             gameActive = true;
+            S.ecoGameActive = true;
+            updateEcoMarkers();
             document.body.classList.add('game-active');
             dom.gameModal.classList.add('hidden');
             dom.gameTimerBar.classList.add('active');
@@ -2608,6 +2692,7 @@
 
         // Event Listeners
         dom.guideStartGameBtn?.addEventListener('click', () => {
+            openGuideMap();
             showPhasePopup('intro');
             // Hide landing page to show map
             dom.landingPage.classList.add('hidden');
@@ -2620,6 +2705,13 @@
             showPhasePopup('intro');
         });
         dom.gameExitBtn.addEventListener('click', () => {
+            stopGameTimer();
+            clearChallengeMarkers();
+            S.ecoGameActive = false;
+            updateEcoMarkers();
+            dom.gameTimerBar.classList.remove('active');
+            dom.gameRecallPanel.classList.add('hidden');
+            dom.gameRecallPanel.classList.remove('active');
             dom.gameModal.classList.add('hidden');
             // Show landing page again? No, stay on map but exiting game mode
             document.body.classList.remove('game-active');
@@ -2627,28 +2719,15 @@
     };
 
     initEcoData();
-    initFeaturedCarousel();
+    initLocalGuide(); // The map opens without an automatic carousel.
     initEduModal();
     initSdgLessons();
     updateEcoScore();
     renderDailyChallenge();
 
-    // App-open gamification: Logging in extends streak!
-    const streakExtended = recordVisitToday();
+    // Progress is earned through optional activities, not by opening the site.
     renderStreak();
     updateProgressStrip();
-
-    if (streakExtended) {
-        setTimeout(() => {
-            const streak = calcStreak();
-            if (streak > 0) {
-                dom.menuBtn.classList.add('has-notification');
-                toast(`🔥 Daily Streak Extended! You're on a ${streak}-Day streak!`, 'success', 5000);
-                if (typeof confetti === 'function') confetti({ particleCount: 75, spread: 80, origin: { y: 0.8 }, zIndex: 99999 });
-            }
-            updateProgressStrip();
-        }, 1500); // Slight delay for dramatic effect after loading
-    }
 
     initEcoGame(); // Call new game init
     parseUrlParams();
@@ -2662,6 +2741,6 @@
         });
     }
 
-    console.log('🌱 Green Luzern v2 loaded — Sustainability map with retention + streak + PWA!');
+    console.log('Green Luzern local guide loaded');
 })();
 

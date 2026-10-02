@@ -8,7 +8,7 @@
     <meta name="description" content="Green Luzern Privacy Policy — how we handle your data and location information.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" href="style.css">
     <!-- Override the map app's full-screen body lockout -->
@@ -22,7 +22,7 @@
         body {
             background-color: var(--bg-base);
             color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font);
             line-height: 1.6;
             margin: 0;
             padding: 0;
@@ -156,6 +156,7 @@
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="guide.css?v=1">
 </head>
 
 <body>
@@ -163,7 +164,7 @@
     <!-- Header -->
     <header class="page-header">
         <a href="index.html" class="logo">Green Luzern</a>
-        <a href="index.html" class="back-btn">
+        <a href="index.html?map=1" class="back-btn">
             <i class="ph ph-arrow-left"></i> Back to Map
         </a>
     </header>

@@ -727,10 +727,10 @@ const SUSTAINABLE_LOCATIONS = [
 ];
 
 const CATEGORIES = {
-    'vegan': { label: 'Vegan Dining', color: '#4caf50', icon: 'ph-leaf' },
-    'zero-waste': { label: 'Zero Waste', color: '#00bcd4', icon: 'ph-recycle' },
-    'eco-hotel': { label: 'Eco-Hotels', color: '#ff9800', icon: 'ph-bed' },
-    'activity': { label: 'Eco Activities', color: '#9c27b0', icon: 'ph-ticket' },
+    'vegan': { label: 'Plant-based food', color: '#4caf50', icon: 'ph-leaf' },
+    'zero-waste': { label: 'Refill & groceries', color: '#00bcd4', icon: 'ph-recycle' },
+    'eco-hotel': { label: 'Places to stay', color: '#ff9800', icon: 'ph-bed' },
+    'activity': { label: 'Culture & outdoors', color: '#9c27b0', icon: 'ph-ticket' },
     'secondhand': { label: 'Second Hand', color: '#9333ea', icon: 'ph-t-shirt' },
     'ev-charging': { label: 'EV Charging', color: '#eab308', icon: 'ph-lightning' },
     'bike-rental': { label: 'Bike Rental', color: '#f97316', icon: 'ph-bicycle' },
