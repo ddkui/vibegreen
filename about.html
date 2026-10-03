@@ -9,9 +9,9 @@
         content="Learn about Green Luzern — the interactive sustainability map for eco-friendly living in and around Lucerne, Switzerland.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pages.css?v=1">
     <!-- Override the map app's full-screen body lockout -->
     <style>
         html,
@@ -40,7 +40,7 @@
         body {
             background-color: var(--bg-base);
             color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font);
             line-height: 1.6;
         }
 
@@ -288,6 +288,7 @@
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="guide.css?v=7">
 </head>
 
 <body>
@@ -295,9 +296,7 @@
     <!-- Header -->
     <header class="page-header">
         <a href="index.html" class="logo">Green Luzern</a>
-        <a href="index.html" class="back-btn">
-            <i class="ph ph-arrow-left"></i> Back to Map
-        </a>
+        <nav class="page-navigation" aria-label="Main navigation"><a href="index.html#home">Home</a><a href="index.html#map">Map</a><a href="index.html#learn">Learn</a></nav>
     </header>
 
     <!-- Hero -->
@@ -305,10 +304,9 @@
         <div class="hero-badge">
             <i class="ph ph-leaf"></i> Sustainability for Everyone
         </div>
-        <h1>Discover the <span>sustainable side</span><br>of Lucerne</h1>
-        <p>Green Luzern is your free, interactive guide to eco-friendly, sustainable, and locally-minded places in and
-            around Lucerne, Switzerland.</p>
-        <a href="index.html" class="hero-cta">
+        <h1>Get to know <span>Green Luzern</span></h1>
+        <p>A free map for finding local places and making everyday choices around Luzern.</p>
+        <a href="index.html?map=1" class="hero-cta">
             <i class="ph ph-map-pin"></i> Open the Map
         </a>
     </section>
@@ -320,43 +318,46 @@
         <div class="section">
             <div class="section-label">Our Mission</div>
             <h2>What is Green Luzern?</h2>
-            <p>Green Luzern was created to make sustainable living in Lucerne effortless and accessible to everyone —
-                from long-time locals to first-time visitors. We believe that knowing where to find eco-friendly options
-                is the first step towards a more sustainable daily life.</p>
-            <p>Our interactive map aggregates carefully researched, real-world sustainable locations — from zero-waste
-                grocery stores and vegan restaurants to EV charging stations and certified Swisstainable businesses —
-                all in one beautifully designed platform.</p>
+            <p>Green Luzern helps locals and visitors find places and practical stops in and around Luzern: where to eat, shop secondhand, refill a bottle, or rent a bike.</p>
+            <p>The map brings together food, shopping, places to stay, cultural venues, bike rentals, charging points, and public drinking fountains. Check current details with the venue before visiting.</p>
             <p>We take inspiration from the <strong>Swisstainable</strong> movement led by Switzerland Tourism, which
                 promotes tourism and daily life that strengthens the local economy, protects natural landscapes, and
                 respects cultural heritage.</p>
         </div>
 
+        <section class="section" aria-labelledby="listing-policy">
+            <div class="section-label">How listings are chosen</div>
+            <h2 id="listing-policy">A reason behind every pin</h2>
+            <p>Each published place has a documented inclusion reason, source links and a review date on its map card. We check for specific services such as plant-based food, refill shopping, reuse, repair or cycling, or named sustainability programme participation.</p>
+            <p>These services do not certify every aspect of a business. Swisstainable is a programme: Level I means committed, Level II engaged and Level III leading. We show the reported level and do not present a Level I commitment as independent certification. Entries without enough evidence stay off the public map while under review.</p>
+        </section>
+
         <!-- What You Can Find -->
         <div class="section">
             <div class="section-label">Categories</div>
             <h2>What you can find</h2>
-            <p>Green Luzern covers 8 categories of sustainable locations across the Lucerne region:</p>
+            <p>Green Luzern covers 9 categories of sustainable locations across the Lucerne region:</p>
 
             <div class="categories-grid">
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #4caf50;"><i class="ph ph-leaf"></i></div>
-                    <h3>Vegan Dining</h3>
-                    <p>Fully plant-based and organic restaurants.</p>
+                    <h3>Plant-based food</h3>
+                    <p>Vegan and vegetarian venues, plus places with plant-based options.</p>
                 </div>
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #00bcd4;"><i class="ph ph-recycle"></i></div>
-                    <h3>Zero Waste</h3>
+                    <h3>Refill &amp; groceries</h3>
                     <p>Packaging-free shops and bulk food stores.</p>
                 </div>
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #ff9800;"><i class="ph ph-bed"></i></div>
-                    <h3>Eco-Hotels</h3>
-                    <p>Certified sustainable accommodations.</p>
+                    <h3>Places to stay</h3>
+                    <p>Hotels with sustainability initiatives listed in the guide.</p>
                 </div>
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #9c27b0;"><i class="ph ph-ticket"></i></div>
-                    <h3>Eco Activities</h3>
-                    <p>Climate-neutral experiences and tours.</p>
+                    <h3>Culture &amp; outdoors</h3>
+                    <p>Cultural venues, outdoor activities, and local meeting places.</p>
                 </div>
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #9333ea;"><i class="ph ph-t-shirt"></i></div>
@@ -371,13 +372,14 @@
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #f97316;"><i class="ph ph-bicycle"></i></div>
                     <h3>Bike Rental</h3>
-                    <p>Nextbike and city bike-sharing stations.</p>
+                    <p>Bicycle rental, repair and reuse services.</p>
                 </div>
                 <div class="category-card">
                     <div class="category-icon-box" style="background: #14b8a6;"><i class="ph ph-check-circle"></i></div>
                     <h3>Swisstainable</h3>
-                    <p>Officially certified sustainable businesses.</p>
+                    <p>Businesses listed under Switzerland Tourism’s sustainability programme.</p>
                 </div>
+                <div class="category-card"><div class="category-icon-box" style="background:#38bdf8"><i class="ph ph-drop"></i></div><h3>Drinking Water</h3><p>Public fountains for refilling your bottle.</p></div>
             </div>
         </div>
 
@@ -396,8 +398,7 @@
                 <div class="value-item">
                     <i class="ph ph-lock-simple"></i>
                     <h3>Privacy Respecting</h3>
-                    <p>We collect no personal data and use your location only on-device for routing. Your privacy is not
-                        a trade-off.</p>
+                    <p>You can browse without an account. Location access is optional. See our privacy policy for how maps, search, and routing services handle requests.</p>
                 </div>
                 <div class="value-item">
                     <i class="ph ph-open-source-logo"></i>
@@ -420,7 +421,7 @@
             <h2>Proud to support Swisstainable</h2>
             <p>The Swisstainable programme is Switzerland Tourism's official framework recognising businesses that
                 commit to responsible, sustainable practices. Green Luzern proudly aligns with these values and
-                highlights certified local places across Lucerne.</p>
+                highlights participating local places with their programme level.</p>
             <a href="https://www.myswitzerland.com/en-ch/planning/about-switzerland/sustainability/" target="_blank"
                 class="hero-cta">
                 Learn more about Swisstainable <i class="ph ph-arrow-square-out"></i>

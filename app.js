@@ -3,15 +3,67 @@
 
     // ── Config ─────────────────────────────────────────
     const MODE = {
-        driving: { profile: 'driving', speed: null, color: '#4285f4', label: 'Drive', icon: 'ph-car' },
-        cycling: { profile: 'driving', speed: 16, color: '#34a853', label: 'Cycle', icon: 'ph-bicycle' },
-        walking: { profile: 'driving', speed: 5, color: '#fbbc04', label: 'Walk', icon: 'ph-person-simple-walk' },
+        driving: { color: '#4285f4', label: 'Drive', icon: 'ph-car' },
+        cycling: { color: '#34a853', label: 'Cycle', icon: 'ph-bicycle' },
+        walking: { color: '#b88315', label: 'Walk', icon: 'ph-person-simple-walk' },
     };
 
     const TILES = {
-        light: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attr: '© OpenStreetMap © CARTO' },
+        light: { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
         satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: '© Esri' },
     };
+    const STREET_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+    const STREET_ATTRIBUTION = '<a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+    // Keep Leaflet's existing places, routes, and controls over a crisp vector basemap.
+    function createStreetLayer(onFallback = () => {}) {
+        const layer = L.layerGroup();
+        let started = false;
+        layer.on('add', () => {
+            if (started) return;
+            started = true;
+            loadStreetRenderer().catch(() => {}).then(() => {
+                layer.addLayer(createLoadedStreetLayer(onFallback));
+            });
+        });
+        return layer;
+    }
+    function createLoadedStreetLayer(onFallback = () => {}) {
+        const raster = () => L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 });
+        if (!window.maplibregl || !L.maplibreGL) return raster();
+        try {
+            const context = document.createElement('canvas').getContext('webgl2');
+            if (!context) return raster();
+            context.getExtension('WEBGL_lose_context')?.loseContext();
+        } catch { return raster(); }
+
+        const vector = L.maplibreGL({ style: STREET_STYLE, attributionControl: { customAttribution: STREET_ATTRIBUTION } });
+        const group = L.layerGroup([vector]);
+        let loadTimer;
+        let fellBack = false;
+        let active = false;
+        const fallback = () => {
+            if (fellBack || !active) return;
+            fellBack = true;
+            clearTimeout(loadTimer);
+            group.removeLayer(vector);
+            const fallbackLayer = raster();
+            fallbackLayer.on('tileerror', event => group.fire('tileerror', event));
+            group.addLayer(fallbackLayer);
+            onFallback();
+        };
+        group.on('add', () => {
+            active = true;
+            if (fellBack) return;
+            const gl = vector.getMaplibreMap();
+            gl.once('load', () => clearTimeout(loadTimer));
+            gl.once('webglcontextlost', fallback);
+            gl.once('error', () => setTimeout(fallback, 0));
+            loadTimer = setTimeout(() => { if (!gl.isStyleLoaded()) fallback(); }, 12000);
+        });
+        group.on('remove', () => { active = false; clearTimeout(loadTimer); });
+        return group;
+    }
 
     // ── State ──────────────────────────────────────────
     const S = {
@@ -29,7 +81,6 @@
         tileKey: 'light',
         dirOpen: false,
         layersOpen: false,
-        layersOpen: false,
         sidebarOpen: false,
         activeCategories: new Set(), // empty = show all; selecting a category = filter to that category
         ecoMarkers: [],
@@ -38,11 +89,28 @@
         ecoGameActive: false,
     };
 
+    let restoringView = false;
+    let showLearningGuide;
+    let view = 'home';
+    function recordView(next, replace = false) {
+        view = next;
+        document.body.dataset.view = next;
+        document.querySelectorAll('[data-site-view]').forEach(button => {
+            const active = button.dataset.siteView === (next.startsWith('goal-') ? 'learn' : next);
+            if (active) button.setAttribute('aria-current', 'page');
+            else button.removeAttribute('aria-current');
+        });
+        if (restoringView) return;
+        if (location.hash === '#' + next) return;
+        history[replace ? 'replaceState' : 'pushState']({ view: next }, '', location.pathname + '#' + next);
+    }
+
     // ── Helpers ────────────────────────────────────────
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-    function fmt(m) { return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`; }
+    function fmt(m) { return GreenNavigation.distance(m, getSettings().unit); }
     function dur(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h} hr ${m} min` : `${m} min`; }
     function durShort(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : `${m} min`; }
 
@@ -225,7 +293,7 @@
         { text: 'Visit a zero-waste shop 🛍️', category: 'zero-waste' },
         { text: 'Try a vegan meal 🌱', category: 'vegan' },
         { text: 'Rent a bike for your next trip 🚲', category: 'bike-rental' },
-        { text: 'Check out an eco-certified hotel 🏨', category: 'eco-hotel' },
+        { text: 'Check out a hotel’s sustainability programme 🏨', category: 'eco-hotel' },
         { text: 'Plug in at an EV station ⚡', category: 'ev-charging' },
         { text: 'Find something second-hand today 👕', category: 'secondhand' },
         { text: 'Visit a Swisstainable spot 🇨🇭', category: 'swisstainable' },
@@ -347,31 +415,45 @@
     // ── Map Init ───────────────────────────────────────
     const map = L.map('map', {
         center: [47.0480, 8.3200], zoom: 12, zoomControl: false,
-        attributionControl: false, minZoom: 2, maxZoom: 18, worldCopyJump: true,
+        attributionControl: true, minZoom: 2, maxZoom: 18, worldCopyJump: true,
+        maxBounds: [[-85, -180], [85, 180]], maxBoundsViscosity: 1,
     });
 
-    let tileLayer = L.tileLayer(TILES[S.tileKey].url, { attribution: TILES[S.tileKey].attr, maxZoom: 19 }).addTo(map);
+    let tileLayer;
+    function setMapStyle(key) {
+        S.tileKey = Object.hasOwn(TILES, key) ? key : 'light';
+        if (tileLayer) map.removeLayer(tileLayer);
+        tileLayer = S.tileKey === 'light'
+            ? createStreetLayer(() => toast('Using the standard street map while the vector map is unavailable.', 'info'))
+            : L.tileLayer(TILES.satellite.url, { attribution: TILES.satellite.attr, maxZoom: 19 });
+        if (dom.landingPage.classList.contains('hidden')) tileLayer.addTo(map);
+        tileLayer.on('tileerror', () => {
+            document.getElementById('map-result-count').textContent = 'Map tiles are unavailable. You can still search the guide.';
+        });
+        dom.layerCards.forEach(card => { card.classList.toggle('active', card.dataset.style === S.tileKey); card.setAttribute('aria-pressed', String(card.dataset.style === S.tileKey)); });
+    }
+    setMapStyle(getSettings().style);
 
     // ── Loading ────────────────────────────────────────
-    setTimeout(() => {
-        dom.loadingScreen.classList.add('done');
-        setTimeout(() => dom.loadingScreen.remove(), 500);
-    }, 1400);
+    dom.loadingScreen.remove();
+    document.body.classList.add('guide-ready');
 
     // ── Search ─────────────────────────────────────────
     let searchTimer = null;
     dom.searchInput.addEventListener('input', () => {
         const v = dom.searchInput.value.trim();
+        mainSearchRevision++;
         dom.searchClear.classList.toggle('hidden', v.length === 0);
         clearTimeout(searchTimer);
         if (v.length < 2) { dom.searchResults.classList.remove('visible'); return; }
-        searchTimer = setTimeout(() => doSearch(v), 350);
+        doSearch(v, false);
     });
     dom.searchInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') { clearTimeout(searchTimer); doSearch(dom.searchInput.value.trim()); }
         if (e.key === 'Escape') { dom.searchResults.classList.remove('visible'); dom.searchInput.blur(); }
     });
     dom.searchClear.addEventListener('click', () => {
+        mainSearchRevision++;
         dom.searchInput.value = ''; dom.searchClear.classList.add('hidden');
         dom.searchResults.classList.remove('visible'); dom.searchInput.focus();
     });
@@ -379,22 +461,44 @@
         if (!e.target.closest('#search-bar')) dom.searchResults.classList.remove('visible');
     });
 
-    async function doSearch(q) {
+    let mainSearchRevision = 0;
+    async function doSearch(q, external = true) {
+        const revision = ++mainSearchRevision;
         if (!q) return;
+        const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        const matches = SUSTAINABLE_LOCATIONS.filter(loc => `${loc.name} ${loc.address} ${CATEGORIES[loc.category].label}`.toLowerCase().includes(q.toLowerCase()));
+        if (matches.length) {
+            dom.searchResults.innerHTML = matches.slice(0, 8).map(loc => `<button class="sr-item" data-search-place="${escape(loc.id)}"><span class="sr-icon"><i class="ph ph-map-pin" aria-hidden="true"></i></span><span class="sr-text"><span class="sr-name">${escape(loc.name)}</span><span class="sr-detail">${escape(loc.address)}</span></span></button>`).join('');
+            dom.searchResults.classList.add('visible');
+            dom.searchResults.querySelectorAll('[data-search-place]').forEach(button => button.addEventListener('click', () => {
+                S.activeCategories.clear();
+                updateEcoMarkers();
+                S.ecoMarkers.find(item => item.loc.id === button.dataset.searchPlace)?.marker.fire('click');
+                dom.searchResults.classList.remove('visible');
+                dom.searchInput.value = matches.find(loc => loc.id === button.dataset.searchPlace).name;
+            }));
+            return;
+        }
+        if (!external) {
+            dom.searchResults.innerHTML = '<p class="search-hint">No guide match. Press Enter or Search to look up an address.</p>';
+            dom.searchResults.classList.add('visible');
+            return;
+        }
         try {
             const data = await geocode(q, 6);
+            if (revision !== mainSearchRevision || dom.searchInput.value.trim() !== q) return;
             if (!data.length) {
                 dom.searchResults.innerHTML = '<div class="sr-item"><div class="sr-text"><div class="sr-name" style="color:var(--text-muted)">No results found</div></div></div>';
                 dom.searchResults.classList.add('visible'); return;
             }
             dom.searchResults.innerHTML = data.map(d => `
-                <div class="sr-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${d.display_name.split(',')[0].replace(/"/g, '&quot;')}">
+                <button type="button" class="sr-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${escapeHTML(d.display_name.split(',')[0])}">
                     <div class="sr-icon"><i class="ph ph-map-pin"></i></div>
                     <div class="sr-text">
-                        <div class="sr-name">${d.display_name.split(',')[0]}</div>
-                        <div class="sr-detail">${d.display_name}</div>
+                        <div class="sr-name">${escapeHTML(d.display_name.split(',')[0])}</div>
+                        <div class="sr-detail">${escapeHTML(d.display_name)}</div>
                     </div>
-                </div>`).join('');
+                </button>`).join('');
             dom.searchResults.classList.add('visible');
             dom.searchResults.querySelectorAll('.sr-item').forEach(el => {
                 el.addEventListener('click', () => {
@@ -414,6 +518,8 @@
     function updateInfoVisitedBtn() {
         const btn = dom.infoVisitedBtn;
         if (!btn) return;
+        btn.hidden = !infoId;
+        btn.setAttribute('aria-pressed', String(infoId ? isVisited(infoId) : false));
         if (!infoId) { btn.classList.remove('visited-active'); btn.querySelector('i').className = 'ph ph-check-circle'; btn.querySelector('span').textContent = 'Visited'; return; }
         const v = isVisited(infoId);
         btn.classList.toggle('visited-active', v);
@@ -424,10 +530,12 @@
     function updateInfoSavedBtn() {
         const btn = dom.infoSavedBtn;
         if (!btn) return;
+        btn.hidden = !infoId;
+        btn.setAttribute('aria-pressed', String(infoId ? isSaved(infoId) : false));
         if (!infoId) { btn.classList.remove('saved-active'); btn.querySelector('i').className = 'ph ph-heart'; btn.querySelector('span').textContent = 'Save'; return; }
         const s = isSaved(infoId);
         btn.classList.toggle('saved-active', s);
-        btn.querySelector('i').className = s ? 'ph-fill ph-heart' : 'ph ph-heart';
+        btn.querySelector('i').className = s ? 'ph-bold ph-heart' : 'ph ph-heart';
         btn.querySelector('span').textContent = s ? 'Saved' : 'Save';
     }
 
@@ -439,7 +547,10 @@
         }).addTo(map);
         infoLat = lat; infoLng = lng; infoName = name; infoId = locId;
         dom.infoTitle.textContent = name;
-        dom.infoSub.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        dom.infoSub.textContent = fullName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        dom.infoSdg.innerHTML = '';
+        $('#info-description').hidden = true;
+        $('#info-evidence').hidden = true;
         dom.infoCard.classList.remove('hidden');
         if (dom.featuredCarousel) dom.featuredCarousel.classList.add('hidden');
         updateInfoVisitedBtn();
@@ -450,7 +561,8 @@
         dom.infoCard.classList.add('hidden');
         if (infoMarker) { map.removeLayer(infoMarker); infoMarker = null; }
         infoId = null;
-        if (dom.featuredCarousel) dom.featuredCarousel.classList.remove('hidden');
+        map.closePopup();
+        dom.searchInput.focus({ preventScroll: true });
     });
 
     // Saved button handler
@@ -466,7 +578,7 @@
         const fcSaveBtns = document.querySelectorAll(`.fc-save-btn[data-id="${infoId}"]`);
         fcSaveBtns.forEach(b => {
             b.style.color = nowSaved ? '#ef4444' : 'var(--text-secondary)';
-            b.innerHTML = `<i class="${nowSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
+            b.innerHTML = `<i class="${nowSaved ? 'ph-bold ph-heart' : 'ph ph-heart'}"></i>`;
         });
 
         toast(nowSaved ? '❤ Added to My Places' : 'Removed from My Places', 'info');
@@ -524,7 +636,7 @@
             setPoint('dest', infoLat, infoLng, infoName);
             dom.infoCard.classList.add('hidden');
             if (infoMarker) { map.removeLayer(infoMarker); infoMarker = null; }
-            if (!S.origin) dom.locateBtn.click();
+            if (!S.origin) dom.dirOrigin.focus();
         }
     });
 
@@ -567,10 +679,11 @@
 
     // ── Map Click → info card with reverse geocode ────
     map.on('click', async e => {
-        if (S.dirOpen) return; // don't interfere when directions panel is open
+        if (S.dirOpen || S.ecoGameActive || NAV.active) return;
         const { lat, lng } = e.latlng;
         showLocation(lat, lng, 'Loading...', '');
         const name = await reverseGeocode(lat, lng);
+        if (infoLat !== lat || infoLng !== lng || dom.infoCard.classList.contains('hidden')) return;
         const shortName = name.split(',')[0];
         dom.infoTitle.textContent = shortName;
         dom.infoSub.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -629,6 +742,7 @@
                 body: JSON.stringify({ name, address, lat, lng, category, description, submitted_by: submitter })
             });
 
+            if (!res.headers.get('content-type')?.includes('application/json')) throw new Error('Submission service unavailable');
             const data = await res.json();
 
             if (res.ok) {
@@ -642,7 +756,7 @@
             }
         } catch (err) {
             console.error('Submission error:', err);
-            dom.suggestStatus.textContent = 'Network error. Please try again later.';
+            dom.suggestStatus.textContent = 'The submission service is unavailable. Your form is still here; please try again later.';
             dom.suggestStatus.className = 'suggest-status error';
         } finally {
             dom.suggestSubmitBtn.disabled = false;
@@ -652,7 +766,10 @@
 
     // ── Settings Modal ─────────────────────────────────
     function getSettings() {
-        return JSON.parse(localStorage.getItem('vibemap_settings') || '{"style":"dark","unit":"metric"}');
+        try {
+            const settings = JSON.parse(localStorage.getItem('vibemap_settings') || '{}') || {};
+            return { ...settings, style: Object.hasOwn(TILES, settings.style) ? settings.style : 'light', unit: settings.unit === 'imperial' ? 'imperial' : 'metric' };
+        } catch { return { style: 'light', unit: 'metric' }; }
     }
 
     function saveSettings(s) {
@@ -674,15 +791,18 @@
         dom.stButtons.forEach(btn => {
             if (btn.dataset.style) {
                 btn.classList.toggle('active', btn.dataset.style === current.style);
+                btn.setAttribute('aria-pressed', String(btn.dataset.style === current.style));
             }
             if (btn.dataset.unit) {
                 btn.classList.toggle('active', btn.dataset.unit === current.unit);
+                btn.setAttribute('aria-pressed', String(btn.dataset.unit === current.unit));
             }
         });
     });
 
     dom.settingsClose.addEventListener('click', () => {
         dom.settingsModal.classList.add('hidden');
+        $('#reset-confirmation').hidden = true;
     });
 
     dom.stButtons.forEach(btn => {
@@ -690,83 +810,97 @@
             const current = getSettings();
             if (btn.dataset.style) {
                 current.style = btn.dataset.style;
-                S.tileKey = current.style;
-                tileLayer.setUrl(TILES[S.tileKey].url); // Live update map
+                setMapStyle(current.style);
             }
             if (btn.dataset.unit) {
                 current.unit = btn.dataset.unit;
-                // Currently only visual saving, can be hooked to OSRM later
+                // Route responses stay in meters; format them using this preference.
             }
             saveSettings(current);
+            if (S.allRouteData[S.mode]) renderActiveState(false);
 
             // Re-render active state visually
             const siblings = btn.parentElement.querySelectorAll('.st-btn');
-            siblings.forEach(s => s.classList.remove('active'));
+            siblings.forEach(s => { s.classList.remove('active'); s.setAttribute('aria-pressed', 'false'); });
             btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
         });
     });
 
+    let resetBackup;
+    const refreshVisitProgress = () => {
+        S.ecoMarkers.forEach(refreshChipIcon);
+        updateEcoScore(); renderStreak(); renderDailyChallenge(); updateProgressStrip(); updateInfoVisitedBtn();
+    };
     dom.stResetData.addEventListener('click', () => {
-        if (confirm("Are you sure? This will wipe your visited spots, streaks, and challenges.")) {
-            localStorage.removeItem(VISITED_KEY);
-            localStorage.removeItem(STREAK_KEY);
-            // Removes all Challenge keys
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key.startsWith('vibemap_ch_')) localStorage.removeItem(key);
-            }
-            alert("Data reset successfully.");
-            location.reload();
+        $('#reset-confirmation').hidden = false;
+        $('#reset-cancel').focus();
+    });
+    $('#reset-cancel').addEventListener('click', () => {
+        $('#reset-confirmation').hidden = true;
+        dom.stResetData.focus();
+    });
+    $('#reset-confirm').addEventListener('click', () => {
+        resetBackup = new Map();
+        for (const key of Object.keys(localStorage)) {
+            if (key === VISITED_KEY || key === STREAK_KEY || key.startsWith('vibemap_ch_')) resetBackup.set(key, localStorage.getItem(key));
         }
+        resetBackup.forEach((value, key) => localStorage.removeItem(key));
+        $('#reset-confirmation').hidden = true;
+        $('#reset-undo').hidden = false;
+        dom.stResetData.disabled = true;
+        $('#reset-undo').focus();
+        refreshVisitProgress();
+        toast('Visit progress reset. You can undo this while this page stays open.', 'info');
+    });
+    $('#reset-undo').addEventListener('click', () => {
+        resetBackup?.forEach((value, key) => localStorage.setItem(key, value));
+        resetBackup = null;
+        $('#reset-undo').hidden = true;
+        dom.stResetData.disabled = false;
+        refreshVisitProgress();
+        dom.stResetData.focus();
+        toast('Visit progress restored.', 'success');
     });
 
     // ── Directions Panel ───────────────────────────────
+    dom.dirPanel.inert = true;
     dom.directionsBtn.addEventListener('click', () => openDirections());
     dom.dirBack.addEventListener('click', () => closeDirections());
 
     function openDirections() {
+        recordView('directions');
         S.dirOpen = true;
+        dom.dirPanel.inert = false;
+        document.body.classList.add('planning-route');
         dom.dirPanel.classList.remove('hidden');
         $('#search-bar').style.display = 'none';
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.add('strip-hidden');
-        dom.dirDest.focus();
-
-        // Auto-set origin to user's location (silent, non-blocking)
-        if (!S.origin && navigator.geolocation) {
-            dom.dirOrigin.value = 'Getting your location…';
-            dom.dirOrigin.disabled = true;
-            navigator.geolocation.getCurrentPosition(
-                async (pos) => {
-                    const { latitude: lat, longitude: lng } = pos.coords;
-                    dom.dirOrigin.disabled = false;
-                    // Place user dot on map
-                    if (S.userMarker) map.removeLayer(S.userMarker);
-                    S.userMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({ className: '', html: '<div class="user-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
-                        zIndexOffset: 1000,
-                    }).addTo(map);
-                    setPoint('origin', lat, lng, 'Your location');
-                },
-                () => {
-                    // If denied/unavailable, clear the placeholder and let user type
-                    dom.dirOrigin.disabled = false;
-                    dom.dirOrigin.value = '';
-                    dom.dirOrigin.placeholder = 'Choose starting point';
-                    dom.dirOrigin.focus();
-                },
-                { enableHighAccuracy: true, timeout: 8000 }
-            );
-        }
+        (S.origin ? dom.dirDest : dom.dirOrigin).focus();
     }
 
+    $('#dir-use-location').addEventListener('click', () => {
+        if (!navigator.geolocation) { toast('Location unavailable. Choose a starting point.', 'info'); return; }
+        const revision = routeRevision;
+        navigator.geolocation.getCurrentPosition(pos => {
+            if (!S.dirOpen || revision !== routeRevision) return;
+            if (pos.coords.accuracy > 60) { toast('Location is imprecise. Choose a starting point or retry outdoors.', 'info'); return; }
+            setPoint('origin', pos.coords.latitude, pos.coords.longitude, 'Your location');
+        }, () => toast('Location unavailable. Choose a starting point.', 'info'), { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+    });
+
     function closeDirections() {
+        recordView('map');
         S.dirOpen = false;
+        dom.dirPanel.inert = true;
+        document.body.classList.remove('planning-route');
         dom.dirPanel.classList.add('hidden');
         $('#search-bar').style.display = '';
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.remove('strip-hidden');
         clearRoute();
+        dom.directionsBtn.focus({ preventScroll: true });
     }
 
     // ── Set origin / dest ──────────────────────────────
@@ -794,29 +928,50 @@
 
     // ── Autocomplete for dir inputs ────────────────────
     function setupDirAC(input, dropdown, type) {
-        let t;
-        input.addEventListener('input', () => {
-            clearTimeout(t);
+        let searchRevision = 0;
+        const showResults = data => {
+            dropdown.innerHTML = data.map(d => `<button type="button" class="dir-ac-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${escapeHTML(d.display_name)}"><i class="ph ph-map-pin" aria-hidden="true"></i><span class="dir-ac-name">${escapeHTML(d.display_name)}</span></button>`).join('');
+            dropdown.classList.toggle('visible', data.length > 0);
+            dropdown.querySelectorAll('.dir-ac-item').forEach(el => el.addEventListener('click', () => {
+                searchRevision++;
+                setPoint(type, +el.dataset.lat, +el.dataset.lon, el.dataset.name);
+                dropdown.classList.remove('visible');
+            }));
+        };
+        const localResults = q => SUSTAINABLE_LOCATIONS.filter(loc => `${loc.name} ${loc.address}`.toLowerCase().includes(q.toLowerCase())).slice(0, 5).map(loc => ({ lat: loc.lat, lon: loc.lng, display_name: `${loc.name}, ${loc.address}` }));
+        const search = async () => {
             const q = input.value.trim();
-            if (q.length < 2) { dropdown.classList.remove('visible'); return; }
-            t = setTimeout(async () => {
-                const data = await geocode(q, 5);
-                if (!data.length) { dropdown.classList.remove('visible'); return; }
-                dropdown.innerHTML = data.map(d => `
-                    <div class="dir-ac-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${d.display_name.split(',')[0].replace(/"/g, '&quot;')}">
-                        <i class="ph ph-map-pin"></i>
-                        <span class="dir-ac-name">${d.display_name.split(',').slice(0, 2).join(', ')}</span>
-                    </div>`).join('');
-                dropdown.classList.add('visible');
-                dropdown.querySelectorAll('.dir-ac-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        setPoint(type, +el.dataset.lat, +el.dataset.lon, el.dataset.name);
-                        dropdown.classList.remove('visible');
-                    });
-                });
-            }, 350);
+            if (q.length < 2) return;
+            const revision = ++searchRevision;
+            const local = localResults(q);
+            if (local.length) { showResults(local); return; }
+            try {
+                const results = await geocode(q, 5);
+                if (revision !== searchRevision || q !== input.value.trim()) return;
+                showResults(results);
+                if (!results.length) toast('No address found. Try a full address or pick a point on the map.', 'info');
+            } catch { if (revision === searchRevision) toast('Address search unavailable. Pick a point on the map.', 'error'); }
+        };
+        const findButton = document.createElement('button');
+        findButton.type = 'button';
+        findButton.className = 'dir-find-button';
+        findButton.textContent = 'Find';
+        findButton.setAttribute('aria-label', type === 'origin' ? 'Find starting point' : 'Find destination');
+        input.parentElement.appendChild(findButton);
+        findButton.addEventListener('click', search);
+        input.addEventListener('input', () => {
+            searchRevision++;
+            S[type === 'origin' ? 'origin' : 'dest'] = null;
+            const markerKey = type === 'origin' ? 'originMarker' : 'destMarker';
+            if (S[markerKey]) { map.removeLayer(S[markerKey]); S[markerKey] = null; }
+            invalidateRoutes();
+            const q = input.value.trim();
+            showResults(q.length >= 2 ? localResults(q) : []);
         });
-        input.addEventListener('keydown', e => { if (e.key === 'Escape') dropdown.classList.remove('visible'); });
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { searchRevision++; dropdown.classList.remove('visible'); }
+            if (e.key === 'Enter') { e.preventDefault(); search(); }
+        });
         document.addEventListener('click', e => { if (!e.target.closest('.dir-field-wrap')) dropdown.classList.remove('visible'); });
     }
     setupDirAC(dom.dirOrigin, dom.dirOriginAC, 'origin');
@@ -825,8 +980,9 @@
     // ── Swap ───────────────────────────────────────────
     dom.dirSwap.addEventListener('click', () => {
         const o = S.origin, d = S.dest;
-        if (o) setPoint('dest', o.lat, o.lng, o.name); else { S.dest = null; dom.dirDest.value = ''; if (S.destMarker) { map.removeLayer(S.destMarker); S.destMarker = null; } }
-        if (d) setPoint('origin', d.lat, d.lng, d.name); else { S.origin = null; dom.dirOrigin.value = ''; if (S.originMarker) { map.removeLayer(S.originMarker); S.originMarker = null; } }
+        clearRoute();
+        if (d) setPoint('origin', d.lat, d.lng, d.name);
+        if (o) setPoint('dest', o.lat, o.lng, o.name);
     });
 
     // ── Mode Tabs ──────────────────────────────────────
@@ -834,60 +990,71 @@
         tab.addEventListener('click', () => {
             S.mode = tab.dataset.mode;
             S.activeRouteIdx = 0; // reset to first route when changing mode
-            dom.modeTabs.forEach(t => t.classList.remove('active'));
+            dom.modeTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-pressed', 'false'); });
             tab.classList.add('active');
+            tab.setAttribute('aria-pressed', 'true');
             if (S.allRouteData[S.mode]) renderActiveState(true);
+            else {
+                clearMapRoutes(); dom.routeSummary.classList.add('hidden'); dom.dirBottom.classList.add('hidden'); dom.stepsList.innerHTML = '';
+                dom.alternativesList.classList.remove('hidden');
+                dom.alternativesList.textContent = !S.origin || !S.dest
+                    ? 'Choose a starting point and destination to compare routes.'
+                    : 'No route available for this mode. Choose another mode or change the endpoints.';
+            }
         });
     });
 
     // ── Fetch all modes at once (Google Maps style) ───
+    let routeController;
+    let routeRevision = 0;
+    function invalidateRoutes() {
+        routeRevision++;
+        routeController?.abort();
+        S.allRouteData = {};
+        clearMapRoutes();
+        dom.routeSummary.classList.add('hidden');
+        dom.dirBottom.classList.add('hidden');
+        dom.alternativesList.classList.add('hidden');
+        dom.stepsList.innerHTML = '';
+        dom.etaDriving.textContent = '—'; dom.etaCycling.textContent = '—'; dom.etaWalking.textContent = '—';
+    }
     async function fetchAllModes() {
         if (!S.origin || !S.dest) return;
-        S.allRouteData = {};
+        invalidateRoutes();
+        const revision = routeRevision;
+        routeController = new AbortController();
+        const controller = routeController;
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        const signal = routeController.signal;
+        const origin = { ...S.origin }, destination = { ...S.dest };
 
         // Show loading ETAs
         dom.etaDriving.textContent = '...';
         dom.etaCycling.textContent = '...';
         dom.etaWalking.textContent = '...';
 
-        const { lat: oLat, lng: oLng } = S.origin;
-        const { lat: dLat, lng: dLng } = S.dest;
-
         try {
-            // Include alternatives=true to get multiple paths
-            const url = `https://router.project-osrm.org/route/v1/driving/${oLng},${oLat};${dLng},${dLat}?overview=full&geometries=geojson&steps=true&alternatives=true`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-
-            if (data.code !== 'Ok' || !data.routes?.length) {
-                toast('No route found', 'error');
-                dom.etaDriving.textContent = '—';
-                dom.etaCycling.textContent = '—';
-                dom.etaWalking.textContent = '—';
+            const modes = Object.entries(MODE);
+            const results = await Promise.allSettled(modes.map(([key]) => GreenRouting.fetchRoutes(origin, destination, key, signal)));
+            if (revision !== routeRevision) return;
+            results.forEach((result, index) => {
+                const [key, cfg] = modes[index];
+                if (result.status === 'fulfilled') S.allRouteData[key] = result.value.map(route => ({ route, duration: route.duration, distM: route.distance, cfg }));
+            });
+            dom.etaDriving.textContent = S.allRouteData.driving ? durShort(S.allRouteData.driving[0].duration) : '—';
+            dom.etaCycling.textContent = S.allRouteData.cycling ? durShort(S.allRouteData.cycling[0].duration) : '—';
+            dom.etaWalking.textContent = S.allRouteData.walking ? durShort(S.allRouteData.walking[0].duration) : '—';
+            if (!S.allRouteData[S.mode]) {
+                dom.alternativesList.classList.remove('hidden');
+                dom.alternativesList.textContent = 'Routing unavailable for this mode. Try another mode or retry your endpoints.';
                 return;
             }
-
-            // Calculate for each mode using the primary route (or all alternatives)
-            for (const [key, cfg] of Object.entries(MODE)) {
-                const routes = data.routes.map((r, idx) => {
-                    const duration = cfg.speed ? (r.distance / 1000) / cfg.speed * 3600 : r.duration;
-                    return { route: r, duration, distM: r.distance, cfg };
-                });
-                S.allRouteData[key] = routes;
-            }
-
-            // Update ETA pills using the first route of each mode
-            dom.etaDriving.textContent = durShort(S.allRouteData.driving[0].duration);
-            dom.etaCycling.textContent = durShort(S.allRouteData.cycling[0].duration);
-            dom.etaWalking.textContent = durShort(S.allRouteData.walking[0].duration);
 
             S.activeRouteIdx = 0;
             renderActiveState(true);
 
-        } catch (err) {
-            console.error('Routing error:', err);
-            toast('Routing failed', 'error');
-        }
+        } catch (err) { if (revision === routeRevision) toast('Routing unavailable. Please try again.', 'error'); }
+        finally { clearTimeout(timeout); }
     }
 
     function renderActiveState(fit = false) {
@@ -967,28 +1134,30 @@
 
         // Fit bounds only if requested (e.g. first search, not just toggling alternative)
         if (fit) {
-            map.fitBounds(S.routeLine.getBounds(), { padding: [60, 60], duration: 1 });
+            const size = map.getSize();
+            const panel = dom.dirPanel.getBoundingClientRect();
+            const mobile = size.x <= 768;
+            map.fitBounds(S.routeLine.getBounds(), {
+                paddingTopLeft: [mobile ? 30 : panel.width + 30, 40],
+                paddingBottomRight: [30, mobile ? panel.height + 20 : 30], duration: 1
+            });
         }
     }
 
     // ── Render Alternatives Panel ──────────────────────
     function renderAlternativesUI(routes) {
-        if (routes.length <= 1) {
-            dom.alternativesList.classList.add('hidden');
-            return;
-        }
-
         dom.alternativesList.classList.remove('hidden');
-        dom.alternativesList.innerHTML = routes.map((rd, i) => {
+        dom.alternativesList.innerHTML = `<p class="route-options-note">${routes.length > 1 ? `${routes.length} routes available · select one` : 'One route available · no alternative returned'}</p>` + routes.map((rd, i) => {
             const via = findMainRoad(rd.route);
+            const extra = rd.duration - routes[0].duration;
             return `
-                <div class="route-card ${i === S.activeRouteIdx ? 'active' : ''}" data-idx="${i}" data-mode="${S.mode}">
+                <button type="button" class="route-card ${i === S.activeRouteIdx ? 'active' : ''}" aria-pressed="${i === S.activeRouteIdx}" data-idx="${i}" data-mode="${S.mode}">
                     <div class="route-card-header">
                         <span class="route-card-duration">${durShort(rd.duration)}</span>
                         <span class="route-card-dist">${fmt(rd.distM)}</span>
                     </div>
-                    <div class="route-card-via">${via ? 'via ' + via : 'Alternative route'}</div>
-                </div>
+                    <div class="route-card-via">${via ? 'via ' + escapeHTML(via) : `Route ${i + 1}`} · ${i === 0 ? 'Fastest estimate' : extra < 60 ? 'Similar time' : `+${durShort(extra)}`}</div>
+                </button>
             `;
         }).join('');
 
@@ -1008,6 +1177,13 @@
         dom.routeDetails.textContent = `${fmt(rd.distM)}`;
         const mainRoad = findMainRoad(rd.route);
         dom.routeVia.textContent = mainRoad ? `via ${mainRoad}` : '';
+        const points = rd.route.geometry.coordinates;
+        const startGap = distM([S.origin.lat, S.origin.lng], [points[0][1], points[0][0]]);
+        const last = points[points.length - 1];
+        const endGap = distM([S.dest.lat, S.dest.lng], [last[1], last[0]]);
+        $('#route-service-note').textContent = Math.max(startGap, endGap) > 100
+            ? 'Route ends at the nearest accessible road or path. Check the final approach.'
+            : 'Estimated time · no live traffic. Routes: Valhalla / OpenStreetMap.';
         dom.routeSummary.classList.remove('hidden');
 
         buildSteps(rd.route, cfg);
@@ -1031,6 +1207,7 @@
     }
 
     function clearRoute() {
+        invalidateRoutes();
         clearMapRoutes();
         if (S.originMarker) { map.removeLayer(S.originMarker); S.originMarker = null; }
         if (S.destMarker) { map.removeLayer(S.destMarker); S.destMarker = null; }
@@ -1050,6 +1227,7 @@
     // ═══════════════════════════════════════════════════
     const NAV = {
         active: false,
+        mode: 'driving',
         watchId: null,
         routeCoords: [],   // [[lat,lng], ...] full route
         passedIdx: 0,      // index of the last passed point
@@ -1061,6 +1239,11 @@
         steps: [],         // OSRM steps for instruction display
         stepIdx: 0,        // current step
         destCoord: null,   // [lat, lng] destination
+        routeDuration: 0,
+        routeDistance: 0,
+        offRouteReadings: 0,
+        rerouting: false,
+        generation: 0,
     };
 
     /* distance in metres between two [lat,lng] points */
@@ -1069,23 +1252,6 @@
         const dLat = toR(b[0] - a[0]), dLon = toR(b[1] - a[1]);
         const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a[0])) * Math.cos(toR(b[0])) * Math.sin(dLon / 2) ** 2;
         return 2 * R * Math.asin(Math.sqrt(h));
-    }
-
-    /* nearest point index on route coords to a [lat,lng] */
-    function nearestIdx(coords, pos) {
-        let best = 0, bestD = Infinity;
-        for (let i = 0; i < coords.length; i++) {
-            const d = distM(coords[i], pos);
-            if (d < bestD) { bestD = d; best = i; }
-        }
-        return { idx: best, d: bestD };
-    }
-
-    /* Haversine remaining distance along remaining coords */
-    function remainingDistance(coords, fromIdx) {
-        let d = 0;
-        for (let i = fromIdx; i < coords.length - 1; i++) d += distM(coords[i], coords[i + 1]);
-        return d;
     }
 
     /* build nav HUD overlay if not present */
@@ -1121,6 +1287,8 @@
     }
 
     function stopNavigation() {
+        NAV.generation++;
+        document.body.classList.remove('navigation-active');
         if (NAV.watchId != null) navigator.geolocation.clearWatch(NAV.watchId);
         clearTimeout(NAV.rerouteTimer);
         if (NAV.linePassed) { map.removeLayer(NAV.linePassed); NAV.linePassed = null; }
@@ -1148,15 +1316,23 @@
         // Close sidebar & directions panel
         if (S.sidebarOpen) dom.sidebarClose.click();
         dom.dirPanel.classList.add('hidden');
+        dom.dirPanel.inert = true;
+        document.body.classList.remove('planning-route');
         $('#search-bar').style.display = 'none';
 
         const rd = S.allRouteData[S.mode][S.activeRouteIdx];
+        NAV.mode = S.mode;
         NAV.routeCoords = rd.route.geometry.coordinates.map(c => [c[1], c[0]]);
         NAV.steps = rd.route.legs[0]?.steps || [];
         NAV.stepIdx = 0;
         NAV.passedIdx = 0;
         NAV.destCoord = NAV.routeCoords[NAV.routeCoords.length - 1];
+        NAV.routeDuration = rd.duration;
+        NAV.routeDistance = rd.distM;
+        NAV.offRouteReadings = 0;
+        NAV.generation++;
         NAV.active = true;
+        document.body.classList.add('navigation-active');
 
         // Remove old static route lines
         clearMapRoutes();
@@ -1166,8 +1342,8 @@
         NAV.lineRemain = L.polyline(NAV.routeCoords, { color: MODE[S.mode].color, weight: 7, opacity: 1, lineJoin: 'round' }).addTo(map);
 
         ensureNavHUD();
-        updateNavHUD({ instruction: NAV.steps[0]?.maneuver?.instruction || 'Head towards destination' });
-        toast('Navigation started! 🚗', 'success');
+        updateNavHUD({ instruction: getStepInstruction(NAV.steps[0]), etaSec: rd.duration, remainM: rd.distM });
+        toast(`${MODE[S.mode].label} navigation started`, 'success');
 
         NAV.watchId = navigator.geolocation.watchPosition(onNavPosition,
             () => toast('GPS signal lost', 'error'),
@@ -1177,8 +1353,13 @@
 
     function onNavPosition(pos) {
         if (!NAV.active) return;
-        const { latitude: lat, longitude: lng, speed } = pos.coords;
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
         const userPos = [lat, lng];
+        if (!Number.isFinite(accuracy) || accuracy > 60) {
+            NAV.offRouteReadings = 0;
+            updateNavHUD({ instruction: 'Waiting for a more accurate GPS position…' });
+            return;
+        }
 
         // Move user arrow
         if (NAV.arrowMarker) map.removeLayer(NAV.arrowMarker);
@@ -1191,11 +1372,13 @@
         map.setView(userPos, Math.max(map.getZoom(), 16), { animate: true, duration: 0.6 });
 
         // Find nearest point on route
-        const { idx, d } = nearestIdx(NAV.routeCoords, userPos);
+        const match = GreenRouting.nearestOnRoute(NAV.routeCoords, userPos);
+        const { idx, d } = match;
 
         // Off-route? reroute after 30m deviation and 5s cooldown
         const now = Date.now();
-        if (d > 30 && now - NAV.lastRerouteTime > 5000) {
+        NAV.offRouteReadings = d > Math.max(35, accuracy * 1.5) ? NAV.offRouteReadings + 1 : 0;
+        if (NAV.offRouteReadings >= 2 && !NAV.rerouting && now - NAV.lastRerouteTime > 15000) {
             NAV.lastRerouteTime = now;
             toast('Off route — recalculating…', 'info', 3000);
             rerouteFrom(lat, lng);
@@ -1206,27 +1389,31 @@
         if (idx > NAV.passedIdx) NAV.passedIdx = idx;
 
         // Split route into passed (gray) and remaining (colored)
-        const passed = NAV.routeCoords.slice(0, NAV.passedIdx + 1).concat([userPos]);
-        const remain = [userPos].concat(NAV.routeCoords.slice(NAV.passedIdx + 1));
+        const passed = NAV.routeCoords.slice(0, idx + 1).concat([match.point]);
+        const remain = [match.point].concat(NAV.routeCoords.slice(idx + 1));
         NAV.linePassed.setLatLngs(passed);
         NAV.lineRemain.setLatLngs(remain);
 
         // Advance step
-        const step = NAV.steps[NAV.stepIdx];
+        while (NAV.stepIdx < NAV.steps.length - 1) {
+            const location = NAV.steps[NAV.stepIdx + 1].maneuver.location;
+            const turn = GreenRouting.nearestOnRoute(NAV.routeCoords, [location[1], location[0]]);
+            if (turn.remaining < match.remaining - Math.min(8, accuracy / 2)) break;
+            NAV.stepIdx++;
+        }
+        const step = NAV.steps[Math.min(NAV.stepIdx + 1, NAV.steps.length - 1)];
         if (step) {
             const stepLoc = [step.maneuver.location[1], step.maneuver.location[0]];
-            const distToStep = distM(userPos, stepLoc);
-            if (distToStep < 20 && NAV.stepIdx < NAV.steps.length - 1) NAV.stepIdx++;
-            const nextStep = NAV.steps[NAV.stepIdx];
-            const instruction = getStepInstruction(nextStep);
-            const remainM = remainingDistance(NAV.routeCoords, NAV.passedIdx);
-            const modeSpeed = MODE[S.mode].speed || 13.9; // m/s
-            const etaSec = remainM / modeSpeed;
+            const turn = GreenRouting.nearestOnRoute(NAV.routeCoords, stepLoc);
+            const distToStep = Math.max(0, match.remaining - turn.remaining);
+            const instruction = getStepInstruction(step);
+            const remainM = match.remaining;
+            const etaSec = GreenRouting.remainingTime(NAV.steps, NAV.stepIdx, distToStep);
             updateNavHUD({ instruction, distToStep, etaSec, remainM });
         }
 
         // Arrived?
-        if (distM(userPos, NAV.destCoord) < 25) {
+        if (accuracy <= 25 && match.remaining < 50 && distM(userPos, NAV.destCoord) < 20) {
             toast('You have arrived! 🎉', 'success', 5000);
             stopNavigation();
         }
@@ -1234,6 +1421,7 @@
 
     function getStepInstruction(step) {
         if (!step) return 'Continue towards destination';
+        if (step.maneuver?.instruction) return step.maneuver.instruction;
         const m = step.maneuver;
         const type = m?.type || 'continue';
         const mod = m?.modifier || '';
@@ -1245,22 +1433,27 @@
     }
 
     async function rerouteFrom(lat, lng) {
-        if (!NAV.active || !S.dest) return;
+        if (!NAV.active || !S.dest || NAV.rerouting) return;
+        NAV.rerouting = true;
+        const generation = NAV.generation;
+        const mode = NAV.mode;
         try {
-            const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${S.dest.lng},${S.dest.lat}?overview=full&geometries=geojson&steps=true`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.code !== 'Ok' || !data.routes?.length) { toast('Reroute failed', 'error'); return; }
-            const r = data.routes[0];
+            const routes = await GreenRouting.fetchRoutes({ lat, lng }, S.dest, mode, AbortSignal.timeout(15000), 0);
+            if (!NAV.active || generation !== NAV.generation) return;
+            const r = routes[0];
             NAV.routeCoords = r.geometry.coordinates.map(c => [c[1], c[0]]);
             NAV.steps = r.legs[0]?.steps || [];
             NAV.stepIdx = 0;
             NAV.passedIdx = 0;
             NAV.lastRerouteTime = Date.now();
+            NAV.routeDuration = r.duration;
+            NAV.routeDistance = r.distance;
+            NAV.offRouteReadings = 0;
             NAV.linePassed.setLatLngs([]);
             NAV.lineRemain.setLatLngs(NAV.routeCoords);
             toast('Route updated ✓', 'success', 2000);
-        } catch { toast('Reroute failed', 'error'); }
+        } catch { if (NAV.active && generation === NAV.generation) toast('Reroute unavailable. Keeping the current route.', 'error'); }
+        finally { NAV.rerouting = false; }
     }
 
     dom.startNavBtn.addEventListener('click', startNavigation);
@@ -1287,13 +1480,14 @@
             const m = s.maneuver, type = m.type || 'continue', mod = m.modifier || '';
             const icon = modIcons[mod] || dirIcons[type] || 'ph-arrow-up';
             let text;
-            if (type === 'depart') text = `Head on <strong>${s.name || 'the road'}</strong>`;
+            if (m.instruction) text = escapeHTML(m.instruction);
+            else if (type === 'depart') text = `Head on <strong>${escapeHTML(s.name || 'the road')}</strong>`;
             else if (type === 'arrive') text = `Arrive at <strong>destination</strong>`;
             else {
                 const act = mod ? (mod.charAt(0).toUpperCase() + mod.slice(1)) : 'Continue';
-                text = s.name ? `${act} on <strong>${s.name}</strong>` : `${act}`;
+                text = s.name ? `${escapeHTML(act)} on <strong>${escapeHTML(s.name)}</strong>` : escapeHTML(act);
             }
-            const stepDur = cfg.speed ? durShort((s.distance / 1000) / cfg.speed * 3600) : durShort(s.duration);
+            const stepDur = durShort(s.duration);
             return `<div class="step-item" data-lat="${m.location[1]}" data-lng="${m.location[0]}">
                 <div class="step-icon"><i class="ph ${icon}"></i></div>
                 <div class="step-content">
@@ -1360,18 +1554,22 @@
     // ── Search Action ──
     dom.searchGoBtn.addEventListener('click', () => {
         const query = dom.searchInput.value.trim();
-        if (query) runSearch(query);
+        if (query) { clearTimeout(searchTimer); doSearch(query); }
     });
     
 
     // ── Layers ─────────────────────────────────────────
     dom.layersBtn.addEventListener('click', () => {
         S.layersOpen = !S.layersOpen;
+        dom.layersPanel.inert = !S.layersOpen;
+        dom.layersBtn.setAttribute('aria-expanded', String(S.layersOpen));
         dom.layersPanel.classList.toggle('hidden', !S.layersOpen);
         dom.layersBtn.classList.toggle('active', S.layersOpen);
     });
     dom.layersClose.addEventListener('click', () => {
         S.layersOpen = false;
+        dom.layersPanel.inert = true;
+        dom.layersBtn.setAttribute('aria-expanded', 'false');
         dom.layersPanel.classList.add('hidden');
         dom.layersBtn.classList.remove('active');
     });
@@ -1382,8 +1580,8 @@
             S.tileKey = key;
             dom.layerCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            map.removeLayer(tileLayer);
-            tileLayer = L.tileLayer(TILES[key].url, { attribution: TILES[key].attr, maxZoom: 19 }).addTo(map);
+            setMapStyle(key);
+            saveSettings({ ...getSettings(), style: key });
             toast(`Map: ${key.charAt(0).toUpperCase() + key.slice(1)}`, 'info', 1500);
         });
     });
@@ -1396,7 +1594,10 @@
     dom.menuBtn.addEventListener('click', () => {
         dom.menuBtn.classList.remove('has-notification');
         S.sidebarOpen = true;
+        dom.menuBtn.setAttribute('aria-expanded', 'true');
+        $('#site-menu-btn').setAttribute('aria-expanded', 'true');
         dom.sidebarMenu.classList.remove('hidden');
+        dom.sidebarClose.focus();
         dom.sidebarOverlay.classList.remove('hidden');
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.add('strip-hidden');
@@ -1406,6 +1607,9 @@
 
     dom.sidebarClose.addEventListener('click', () => {
         S.sidebarOpen = false;
+        dom.menuBtn.setAttribute('aria-expanded', 'false');
+        $('#site-menu-btn').setAttribute('aria-expanded', 'false');
+        (S.dirOpen ? $('#site-menu-btn') : dom.menuBtn).focus();
         dom.sidebarMenu.classList.add('hidden');
         dom.sidebarOverlay.classList.add('hidden');
         const strip = document.getElementById('progress-strip');
@@ -1415,212 +1619,113 @@
     dom.sidebarOverlay.addEventListener('click', () => {
         dom.sidebarClose.click();
     });
-
-    // ── Eco-Memory Game Logic ───────────────────────
-    let gameInterval;
-    let gamePhase = 'none'; // 'study', 'countdown', 'challenge'
-    let gameScore = 0;
-    let foundSpots = []; // IDs of spots correctly identified
-    let challengeSpots = []; // The 5 random spots for this game
-
-    const startEcoGame = () => {
-        gamePhase = 'study';
-        gameScore = 0;
-        foundSpots = [];
-
-        // Pick 5 random locations
-        challengeSpots = [...SUSTAINABLE_LOCATIONS]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 5);
-
-        dom.gameOverlay.classList.remove('hidden');
-        dom.gameDashboard.classList.remove('hidden');
-        dom.gameSetup.classList.remove('hidden');
-        dom.gameCountdownScreen.classList.add('hidden');
-        dom.resultScreen.classList.add('hidden');
-
-        // Ensure only selected 5 markers are visible for studying
-        S.ecoGameActive = true;
-        updateEcoMarkers(); // Hide all normal ones
-
-        challengeSpots.forEach(loc => {
-            const entry = S.ecoMarkers.find(e => e.loc.id === loc.id);
-            if (entry && entry.marker) entry.marker.addTo(map);
-        });
-
-        dom.startGameBtn.onclick = () => {
-            dom.gameSetup.classList.add('hidden');
-            startTimer(300, 'Memorize!', () => startCountdown());
-        };
-
-        dom.skipPhaseBtn.onclick = () => {
-            clearInterval(gameInterval);
-            if (gamePhase === 'study') startCountdown();
-            else if (gamePhase === 'challenge') endGame();
-        };
-    };
-
-    const startTimer = (seconds, label, onEnd) => {
-        clearInterval(gameInterval);
-        let timeLeft = seconds;
-        dom.gameTimerLabel.textContent = label;
-
-        const updateClock = () => {
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
-            dom.gameTimerClock.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        };
-
-        updateClock();
-        gameInterval = setInterval(() => {
-            timeLeft--;
-            updateClock();
-            if (timeLeft <= 0) {
-                clearInterval(gameInterval);
-                onEnd();
-            }
-        }, 1000);
-    };
-
-    const startCountdown = () => {
-        gamePhase = 'countdown';
-        dom.gameOverlay.classList.remove('hidden');
-        dom.gameCountdownScreen.classList.remove('hidden');
-
-        // Hide ALL markers for challenge
-        S.ecoGameActive = true;
-        updateEcoMarkers();
-
-        let count = 3;
-        dom.countdownNum.textContent = count;
-
-        const countInt = setInterval(() => {
-            count--;
-            if (count > 0) {
-                dom.countdownNum.textContent = count;
-            } else {
-                clearInterval(countInt);
-                startChallenge();
-            }
-        }, 1000);
-    };
-
-    const startChallenge = () => {
-        gamePhase = 'challenge';
-        dom.gameOverlay.classList.add('hidden');
-        dom.gameCountdownScreen.classList.add('hidden');
-        dom.gameDashboard.classList.remove('hidden');
-
-        toast('🚀 GO! Find the 5 random spots you studied.', 'info');
-        startTimer(900, 'Challenge', () => endGame());
-
-        // Enable map click for markers
-        map.on('click', handleMapGameClick);
-    };
-
-    const handleMapGameClick = (e) => {
-        if (gamePhase !== 'challenge') return;
-
-        const { lat, lng } = e.latlng;
-
-        // Only check against challengeSpots
-        let closest = null;
-        let minDist = 0.0015;
-
-        challengeSpots.forEach(loc => {
-            if (foundSpots.includes(loc.id)) return;
-            const d = Math.sqrt(Math.pow(loc.lat - lat, 2) + Math.pow(loc.lng - lng, 2));
-            if (d < minDist) {
-                minDist = d;
-                closest = loc;
-            }
-        });
-
-        if (closest) {
-            const nameInput = prompt(`You found a spot! What is its name?\n(Hint: It's a ${CATEGORIES[closest.category].label})`);
-            if (nameInput && nameInput.toLowerCase().trim() === closest.name.toLowerCase().trim()) {
-                gameScore++;
-                foundSpots.push(closest.id);
-                // Reveal the marker manually for the game
-                const entry = S.ecoMarkers.find(e => e.loc.id === closest.id);
-                if (entry && entry.marker) entry.marker.addTo(map);
-                toast(`✅ Correct! You remembered ${closest.name}`, 'success');
-                if (gameScore === 5) endGame();
-            } else {
-                toast(`❌ Not quite! Try again.`, 'error');
-            }
-        } else {
-            toast(`📍 Nothing there... think harder!`, 'warning');
-        }
-    };
-
-    const endGame = () => {
-        gamePhase = 'none';
-        clearInterval(gameInterval);
-        map.off('click', handleMapGameClick);
-
-        dom.gameOverlay.classList.remove('hidden');
-        dom.resultScreen.classList.remove('hidden');
-        dom.gameDashboard.classList.add('hidden');
-
-        dom.finalScore.textContent = gameScore;
-        dom.totalSpots.textContent = 5;
-
-        if (gameScore >= 3) {
-            dom.finalScore.style.color = 'var(--accent)';
-            updateEcoScore(gameScore * 20); // Big reward
-
-            // BIG CELEBRATION
-            if (typeof confetti === 'function') {
-                const duration = 3 * 1000;
-                const end = Date.now() + duration;
-                (function frame() {
-                    confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#10b981', '#ffffff'] });
-                    confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#10b981', '#ffffff'] });
-                    if (Date.now() < end) requestAnimationFrame(frame);
-                }());
-            }
-
-            dom.finishMessage.textContent = "Great memory! You've mastered these sustainable spots.";
-        } else {
-            dom.finalScore.style.color = 'var(--red)';
-            dom.finishMessage.textContent = "Don't worry, exploring more will help you remember!";
-        }
-
-        dom.collectRewardBtn.onclick = () => {
-            dom.gameOverlay.classList.add('hidden');
-            S.ecoGameActive = false;
-            updateEcoMarkers();
-            dom.onboardingScreen.classList.add('hidden');
-            localStorage.setItem('vibemap_onboarded', 'true');
-        };
-    };
+    $('#site-menu-btn').addEventListener('click', () => dom.menuBtn.click());
 
     // Landing Page Navigation
     if (dom.startExploringBtn) {
         dom.startExploringBtn.addEventListener('click', () => {
-            dom.landingPage.classList.add('hidden');
-            startEcoGame();
+            openGuideMap();
         });
     }
 
-    if (dom.guideStartGameBtn) {
-        dom.guideStartGameBtn.addEventListener('click', () => {
-            dom.landingPage.classList.add('hidden');
-            startEcoGame();
+    function openGuideMap(category) {
+        recordView('map');
+        dom.landingPage.inert = false;
+        dom.lessonPage.classList.add('hidden');
+        if (S.sidebarOpen) dom.sidebarClose.click();
+        dom.landingPage.classList.add('hidden');
+        setMapAccessibility(true);
+        if (category) {
+            S.activeCategories.clear();
+            S.activeCategories.add(category);
+        }
+        updateEcoMarkers();
+        map.invalidateSize();
+        if (!map.hasLayer(tileLayer)) tileLayer.addTo(map);
+        if (category) {
+            const locations = SUSTAINABLE_LOCATIONS.filter(loc => loc.category === category);
+            if (locations.length) map.fitBounds(locations.map(loc => [loc.lat, loc.lng]), { padding: [65, 150], maxZoom: 14 });
+        }
+        dom.menuBtn.focus({ preventScroll: true });
+    }
+
+    function setMapAccessibility(visible) {
+        document.body.classList.toggle('guide-open', !visible);
+        document.querySelectorAll('#map, #map-categories, #map-result-count, #search-bar, #fab-stack, #zoom-controls, #suggest-btn, #map-site-nav, #info-card').forEach(el => el.inert = !visible);
+    }
+
+    function initLocalGuide() {
+        setMapAccessibility(false);
+        const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        document.querySelectorAll('[data-location-count]').forEach(el => el.textContent = SUSTAINABLE_LOCATIONS.length);
+        document.querySelectorAll('[data-category-count]').forEach(el => el.textContent = Object.keys(CATEGORIES).length);
+        document.getElementById('landing-categories').innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
+            <button class="guide-category" data-guide-category="${key}"><i class="ph ${cat.icon}" aria-hidden="true"></i><span>${escape(cat.label)}</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></button>`).join('');
+        document.querySelectorAll('[data-guide-category]').forEach(button => button.addEventListener('click', () => openGuideMap(button.dataset.guideCategory)));
+        document.querySelectorAll('[data-open-map]').forEach(button => button.addEventListener('click', () => openGuideMap()));
+        document.getElementById('map-categories').innerHTML = '<button data-map-category="all" aria-pressed="true">All places</button>' + Object.entries(CATEGORIES).map(([key, cat]) => `
+            <button data-map-category="${key}" aria-pressed="false"><i class="ph ${cat.icon}" aria-hidden="true"></i>${escape(cat.label)}</button>`).join('');
+        document.querySelectorAll('[data-map-category]').forEach(button => button.addEventListener('click', () => {
+            S.activeCategories.clear();
+            if (button.dataset.mapCategory !== 'all') S.activeCategories.add(button.dataset.mapCategory);
+            updateEcoMarkers();
+            const visible = SUSTAINABLE_LOCATIONS.filter(loc => S.activeCategories.size === 0 || S.activeCategories.has(loc.category));
+            if (visible.length) map.fitBounds(visible.map(loc => [loc.lat, loc.lng]), { padding: [65, 150], maxZoom: 14 });
+        }));
+        const pickIds = ['karls-kraut', 'the-secondhand', 'neubad'];
+        const picks = pickIds.map(id => SUSTAINABLE_LOCATIONS.find(loc => loc.id === id)).filter(Boolean);
+        const descriptions = {
+            'karls-kraut': 'Plant-based food by the Reuss.',
+            'the-secondhand': 'A stop for secondhand clothing.',
+            'neubad': 'A former swimming pool, now a cultural meeting place.'
+        };
+        document.getElementById('local-picks').innerHTML = picks.map((loc, index) => `
+            <button class="guide-pick" data-guide-location="${escape(loc.id)}"><span class="pick-number">0${index + 1}</span><span class="guide-eyebrow">${escape(CATEGORIES[loc.category].label)}</span><h3>${escape(loc.name)}</h3><p>${escape(descriptions[loc.id])}</p><span class="pick-address">${escape(loc.address)}</span><span class="pick-link">Find on the map <i class="ph ph-arrow-up-right" aria-hidden="true"></i></span></button>`).join('');
+        document.querySelectorAll('[data-guide-location]').forEach(button => button.addEventListener('click', () => {
+            S.activeCategories.clear();
+            openGuideMap();
+            S.ecoMarkers.find(item => item.loc.id === button.dataset.guideLocation)?.marker.fire('click');
+        }));
+        const preview = L.map('landing-map', { center: [47.051, 8.308], zoom: 14, zoomControl: false, scrollWheelZoom: false, dragging: false, touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
+        // The small non-interactive preview needs no vector engine or WebGL context.
+        const previewTiles = L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 });
+        const previewElement = document.getElementById('landing-map');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(entries => {
+                if (!entries.some(entry => entry.isIntersecting)) return;
+                previewTiles.addTo(preview);
+                observer.disconnect();
+            }, { root: dom.landingPage, rootMargin: '100px' });
+            observer.observe(previewElement);
+        } else previewTiles.addTo(preview);
+        previewTiles.on('tileerror', () => {
+            document.querySelector('.guide-map-caption > span:first-child').textContent = 'Map preview unavailable. Explore the listings in the full guide.';
         });
+        SUSTAINABLE_LOCATIONS.filter(loc => loc.lat > 47.035 && loc.lat < 47.068 && loc.lng > 8.29 && loc.lng < 8.34).forEach(loc => {
+            const cat = CATEGORIES[loc.category];
+            L.circleMarker([loc.lat, loc.lng], { radius: 5, color: '#ffffff', weight: 2, fillColor: cat.color, fillOpacity: 1, interactive: false }).addTo(preview);
+        });
+        let previewResize;
+        new ResizeObserver(() => {
+            cancelAnimationFrame(previewResize);
+            previewResize = requestAnimationFrame(() => preview.invalidateSize());
+        }).observe(previewElement);
+        updateEcoMarkers();
     }
 
     // ── Keyboard Shortcuts ─────────────────────────────
     document.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT') {
+        if (!dom.landingPage.classList.contains('hidden')) return;
+        if (e.target.closest('input, textarea, select, [contenteditable]')) {
             if (e.key === 'Escape') { e.target.blur(); dom.searchResults.classList.remove('visible'); }
             return;
         }
+        if (!dom.lessonPage.classList.contains('hidden') || document.querySelector('.modal-overlay:not(.hidden), #game-modal:not(.hidden), #sidebar-menu:not(.hidden)') || S.ecoGameActive || NAV.active) return;
         if (e.key === '/') { e.preventDefault(); dom.searchInput.focus(); }
         if (e.key === 'n' || e.key === 'N') { S.dirOpen ? closeDirections() : openDirections(); }
         if (e.key === 'l' || e.key === 'L') dom.locateBtn.click();
         if (e.key === 'Escape') { if (S.dirOpen) closeDirections(); dom.infoCard.classList.add('hidden'); }
+        if (e.key === 'Escape' && S.layersOpen) dom.layersClose.click();
         if (e.key === '+' || e.key === '=') map.zoomIn();
         if (e.key === '-') map.zoomOut();
     });
@@ -1633,6 +1738,8 @@
         }
         if (!e.target.closest('#layers-panel') && !e.target.closest('#layers-btn')) {
             S.layersOpen = false;
+            dom.layersPanel.inert = true;
+            dom.layersBtn.setAttribute('aria-expanded', 'false');
             dom.layersPanel.classList.add('hidden');
             dom.layersBtn.classList.remove('active');
         }
@@ -1655,10 +1762,10 @@
 
     function initEcoData() {
         dom.categoriesList.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
-            return `<div class="category-item" data-cat="${key}">
+            return `<button type="button" class="category-item" aria-pressed="false" data-cat="${key}">
                 <div class="category-icon" style="background: ${cat.color}"><i class="ph-bold ${cat.icon}"></i></div>
                 <div class="category-label">${cat.label}</div>
-            </div>`;
+            </button>`;
         }).join('');
 
         dom.categoriesList.querySelectorAll('.category-item').forEach(item => {
@@ -1684,6 +1791,7 @@
             const saved = savedSet.has(loc.id);
 
             const marker = L.marker([loc.lat, loc.lng], {
+                title: loc.name, alt: loc.name,
                 icon: L.divIcon({
                     className: '',
                     html: buildChipHTML(catInfo, visited, saved),
@@ -1692,31 +1800,26 @@
                 })
             });
 
-            const popupHtml = `
-                <div class="custom-popup">
-                    <div class="popup-meta" style="color: ${catInfo.color};"><i class="ph-bold ${catInfo.icon}"></i> ${catInfo.label}</div>
-                    <div class="popup-title">${loc.name}</div>
-                    <div class="popup-desc">${loc.description}</div>
-                </div>
-            `;
-            marker.bindPopup(popupHtml, {
-                closeButton: true,
-                offset: [0, -10],
-                className: 'flawless-popup'
-            });
-
             marker.on('click', () => {
                 map.flyTo([loc.lat, loc.lng], 16, { duration: 1.0 });
                 dom.infoTitle.textContent = loc.name;
                 dom.infoSub.textContent = catInfo.label + ' · ' + loc.address;
+                $('#info-description').textContent = loc.description;
+                $('#info-description').hidden = false;
+                const evidence = $('#info-evidence');
+                evidence.hidden = !loc.evidence;
+                if (loc.evidence) {
+                    const links = loc.evidence.sources.map(source => `<a href="${escapeHTML(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(source.label)} ↗</a>`).join(' · ');
+                    evidence.innerHTML = `<h4>Why it’s included</h4><p>${escapeHTML(loc.evidence.basis)}</p><div class="evidence-links">${links}</div><small>Sources reviewed ${escapeHTML(loc.evidence.reviewedAt)}${loc.coordinatePrecision === 'square' ? ' · Pin marks the square; find the venue or fountain on arrival.' : ' · Pin marks the building address.'}</small>`;
+                }
 
                 // Show SDG Badges
                 if (loc.sdg && loc.sdg.length > 0) {
                     dom.infoSdg.innerHTML = loc.sdg.map(num => `
-                        <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png" 
-                             class="sdg-mini-icon" 
-                             title="Goal ${num}"
-                             onclick="showSdgLesson(${num})">
+                        <button class="sdg-badge" data-goal="${num}" aria-label="Learn about Goal ${num}">
+                            <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png"
+                                 class="sdg-mini-icon" alt="Goal ${num}">
+                        </button>
                     `).join('');
                 } else {
                     dom.infoSdg.innerHTML = '';
@@ -1729,6 +1832,7 @@
                 dom.infoCard.classList.remove('hidden');
                 if (dom.featuredCarousel) dom.featuredCarousel.classList.add('hidden');
             });
+            marker.on('add', () => marker.getElement()?.setAttribute('aria-label', loc.name));
 
             return { loc, marker };
         });
@@ -1741,21 +1845,23 @@
         if (!dom.myPlacesList) return;
         const savedIds = Array.from(getSaved());
         const savedLocs = savedIds.map(id => SUSTAINABLE_LOCATIONS.find(l => l.id === id)).filter(Boolean);
+        const unavailable = savedIds.length - savedLocs.length;
+        const reviewNotice = unavailable ? `<p class="saved-review-note">${unavailable} saved ${unavailable === 1 ? 'listing is' : 'listings are'} under review and hidden from the public map. Your saved identifiers are kept.</p>` : '';
 
         if (savedLocs.length === 0) {
-            dom.myPlacesList.innerHTML = `
+            dom.myPlacesList.innerHTML = reviewNotice + `
                 <div class="saved-empty-state">
                     <i class="ph ph-heart-break"></i>
-                    <div>No saved places yet.<br>Click the heart icon on any place to save it here!</div>
+                    <div>${unavailable ? "No published saved places available." : "No saved places yet."}<br>Click the heart icon on any place to save it here!</div>
                 </div>
             `;
             return;
         }
 
-        dom.myPlacesList.innerHTML = savedLocs.map(loc => {
+        dom.myPlacesList.innerHTML = reviewNotice + savedLocs.map(loc => {
             const cat = CATEGORIES[loc.category];
             return `
-                <div class="saved-place-item" data-id="${loc.id}">
+                <button type="button" class="saved-place-item" data-id="${loc.id}">
                     <div class="saved-place-info">
                         <div class="category-icon" style="background: ${cat.color}"><i class="ph-bold ${cat.icon}"></i></div>
                         <div class="saved-place-meta">
@@ -1763,7 +1869,7 @@
                             <div class="saved-place-cat">${cat.label}</div>
                         </div>
                     </div>
-                </div>
+                </button>
             `;
         }).join('');
 
@@ -1778,6 +1884,13 @@
 
     function updateEcoMarkers() {
         const showAll = S.activeCategories.size === 0;
+        document.querySelectorAll('[data-map-category]').forEach(button => {
+            const active = button.dataset.mapCategory === 'all' ? showAll : S.activeCategories.has(button.dataset.mapCategory);
+            button.setAttribute('aria-pressed', String(active));
+        });
+        dom.categoriesList.querySelectorAll('.category-item').forEach(item => { const active = S.activeCategories.has(item.dataset.cat); item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); });
+        const count = SUSTAINABLE_LOCATIONS.filter(loc => showAll || S.activeCategories.has(loc.category)).length;
+        document.getElementById('map-result-count').textContent = `${count} ${count === 1 ? 'place' : 'places'} in the guide`;
         S.ecoMarkers.forEach(({ loc, marker }) => {
             // Only show markers if not in eco game study phase
             if (!S.ecoGameActive) {
@@ -1797,171 +1910,20 @@
         if (S.sidebarOpen) dom.sidebarClose.click();
     });
 
-    function initFeaturedCarousel() {
-        if (!dom.featuredCarousel) return;
-
-        const unvisited = SUSTAINABLE_LOCATIONS.filter(loc => !isVisited(loc.id));
-        const pool = unvisited.length >= 5 ? unvisited : SUSTAINABLE_LOCATIONS;
-        // Pick 8 random spots — enough for a continuous loop feel
-        const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 8);
-
-        // Build inner track
-        const track = document.createElement('div');
-        track.id = 'fc-track';
-
-        function buildCard(loc) {
-            const cat = CATEGORIES[loc.category];
-            const card = document.createElement('div');
-            card.className = 'featured-card';
-            const _isSaved = isSaved(loc.id);
-            card.innerHTML = `
-                <div class="fc-accent" style="background: ${cat.color}; box-shadow: 0 0 12px ${cat.color}66;"></div>
-                <div class="fc-body">
-                    <div class="fc-header">
-                        <div class="fc-icon" style="background: ${cat.color}22; color: ${cat.color};">
-                            <i class="ph-bold ${cat.icon}"></i>
-                        </div>
-                        <div class="fc-meta">
-                            <h4 class="fc-title">${loc.name}</h4>
-                            <p class="fc-category" style="color: ${cat.color};">${cat.label}</p>
-                        </div>
-                        <div class="fc-actions" style="margin-left: auto;">
-                            <button class="icon-btn fc-save-btn" data-id="${loc.id}" style="color: ${_isSaved ? '#ef4444' : 'var(--text-secondary)'}; z-index: 10;">
-                                <i class="${_isSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="fc-desc">${loc.description}</p>
-                    <div class="fc-cta"><i class="ph-bold ph-arrow-right"></i> Explore on map</div>
-                </div>
-            `;
-
-            // Handle Save Button click inside card
-            const saveBtn = card.querySelector('.fc-save-btn');
-            saveBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // prevent card click
-                const nowSaved = toggleSaved(loc.id);
-                // Update this button specifically
-                saveBtn.style.color = nowSaved ? '#ef4444' : 'var(--text-secondary)';
-                saveBtn.innerHTML = `<i class="${nowSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
-
-                // Update map marker if exists
-                const entry = S.ecoMarkers.find(e => e.loc.id === loc.id);
-                if (entry) refreshChipIcon(entry);
-
-                // Update My Places
-                if (typeof renderMyPlaces === 'function') renderMyPlaces();
-
-                // If info card is open for this place, update its button too
-                if (infoId === loc.id) updateInfoSavedBtn();
-
-                toast(nowSaved ? '❤ Added to My Places' : 'Removed from My Places', 'info');
-            });
-
-            card.addEventListener('click', () => {
-                const markerObj = S.ecoMarkers.find(m => m.loc.id === loc.id);
-                if (markerObj) markerObj.marker.fire('click');
-            });
-            return card;
-        }
-
-        selected.forEach(loc => track.appendChild(buildCard(loc)));
-        // Duplicate for seamless loop
-        selected.forEach(loc => track.appendChild(buildCard(loc)));
-
-        dom.featuredCarousel.innerHTML = '';
-        dom.featuredCarousel.appendChild(dom.fcClose);
-        dom.featuredCarousel.appendChild(dom.fcPause);
-        dom.featuredCarousel.appendChild(dom.fcPrev);
-        dom.featuredCarousel.appendChild(dom.fcNext);
-        dom.featuredCarousel.appendChild(track);
-
-        // ── Controls ─────────────────────────────────────
-        let paused = false;
-        let manualPaused = false;
-        let halfWidth = 0;
-        let offset = 0;
-
-        const updatePauseBtnIcon = () => {
-            dom.fcPause.innerHTML = manualPaused ? '<i class="ph-bold ph-play"></i>' : '<i class="ph-bold ph-pause"></i>';
-        };
-
-        dom.fcPause.addEventListener('click', (e) => {
-            e.stopPropagation();
-            manualPaused = !manualPaused;
-            updatePauseBtnIcon();
-        });
-
-        dom.fcClose.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dom.featuredCarousel.classList.add('hidden');
-            dom.fcShow.classList.add('hidden'); // Hide the show button too if carousel is closed
-        });
-
-        dom.fcShow.addEventListener('click', () => {
-            dom.featuredCarousel.classList.remove('hidden');
-            dom.fcShow.classList.add('hidden');
-            // Auto-resume scrolling when brought back
-            manualPaused = false;
-            updatePauseBtnIcon();
-        });
-
-        const manualShift = (dir) => {
-            manualPaused = true;
-            updatePauseBtnIcon();
-            if (halfWidth === 0) halfWidth = track.scrollWidth / 2;
-            offset += dir * 260; // card width + gap
-            if (offset < 0) offset += halfWidth;
-            if (offset >= halfWidth) offset -= halfWidth;
-            track.style.transform = `translateX(-${offset}px)`;
-        };
-
-        dom.fcPrev.addEventListener('click', (e) => { e.stopPropagation(); manualShift(-1); });
-        dom.fcNext.addEventListener('click', (e) => { e.stopPropagation(); manualShift(1); });
-
-        // Hover/Touch logic
-        dom.featuredCarousel.addEventListener('mouseenter', () => paused = true);
-        dom.featuredCarousel.addEventListener('mouseleave', () => paused = false);
-        dom.featuredCarousel.addEventListener('touchstart', () => paused = true, { passive: true });
-        dom.featuredCarousel.addEventListener('touchend', () => setTimeout(() => paused = false, 2000));
-
-        // ── Slow auto-scroll via RAF ──────────────────────
-        const SPEED = 0.4; // px per frame
-
-        function scroll() {
-            if (!paused && !manualPaused && !dom.featuredCarousel.classList.contains('hidden')) {
-                offset += SPEED;
-                // Seamless loop: reset when we've scrolled through the first half clone
-                if (halfWidth === 0) halfWidth = track.scrollWidth / 2;
-                if (offset >= halfWidth) offset = 0;
-                track.style.transform = `translateX(-${offset}px)`;
-            }
-            requestAnimationFrame(scroll);
-        }
-
-        // Show after onboarding then start scrolling
-        setTimeout(() => {
-            // Only reveal if the user hasn't already opened the info card
-            if (dom.infoCard.classList.contains('hidden')) {
-                dom.featuredCarousel.classList.remove('hidden');
-            }
-            requestAnimationFrame(scroll);
-        }, 4000);
-    }
-
-    // ── Deep Linking ───────────────────────────────────
     function parseUrlParams() {
         const params = new URLSearchParams(window.location.search);
+        if (params.get('map') === '1') openGuideMap();
         const locId = params.get('loc');
         const lat = params.get('lat');
         const lng = params.get('lng');
 
         if (locId) {
+            openGuideMap();
             const loc = SUSTAINABLE_LOCATIONS.find(l => l.id === locId);
             if (loc) {
                 // Delay to ensure loading screen hide and app init
                 setTimeout(() => {
+                    if (view !== 'map' || dom.landingPage.classList.contains('hidden') === false) return;
                     // Find if the marker is already there (it should be)
                     const markerObj = S.ecoMarkers.find(e => e.loc.id === locId);
                     if (markerObj) {
@@ -1975,12 +1937,13 @@
                         const mo = S.ecoMarkers.find(e => e.loc.id === locId);
                         if (mo) mo.marker.fire('click');
                     }
-                }, 2000);
-            }
+                }, 0);
+            } else toast('This listing is unavailable in the reviewed guide. Search for another place or address.', 'info', 5000);
         } else if (lat && lng) {
+            openGuideMap();
             const pLat = parseFloat(lat);
             const pLng = parseFloat(lng);
-            if (!isNaN(pLat) && !isNaN(pLng)) {
+            if (Number.isFinite(pLat) && Number.isFinite(pLng) && Math.abs(pLat) <= 90 && Math.abs(pLng) <= 180) {
                 setTimeout(async () => {
                     showLocation(pLat, pLng, 'Loading location...', '');
                     const name = await reverseGeocode(pLat, pLng);
@@ -1988,7 +1951,7 @@
                     dom.infoTitle.textContent = shortName;
                     dom.infoSub.textContent = name;
                     if (infoMarker) infoName = shortName;
-                }, 2000);
+                }, 0);
             }
         }
 
@@ -1996,6 +1959,8 @@
         // if (locId || (lat && lng)) window.history.replaceState({}, document.title, window.location.pathname);
     }
 
+    let showSdgLesson;
+    let refreshLessons;
     const initEduModal = () => {
         const LESSONS = [
             { 
@@ -2109,30 +2074,13 @@
             const html = LESSONS.map(lesson => {
                 const isLearned = learned.includes(lesson.id);
                 return `
-                    <div class="lesson-card ${isLearned ? 'completed' : ''}" data-id="${lesson.id}" data-goal="${lesson.goal}">
-                        <div class="lesson-card-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-                            <div class="lesson-goal goal-${lesson.goal}" style="flex-shrink: 0; width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${lesson.goal}</div>
-                            <h4 style="font-size: 1.5rem; font-weight: 800; margin: 0; color: white;">${lesson.title}</h4>
-                        </div>
-                        <div class="lesson-content" style="display: flex; flex-direction: column;">
-                            <p class="lesson-summary" style="font-weight: 700; font-size: 1.05rem; color: var(--accent-light); margin: 0 0 20px 0; letter-spacing: 0.01em; line-height: 1.6;">${lesson.summary}</p>
-                            
-                            <div class="status-2024" style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--red); padding: 16px 20px; border-radius: 8px; margin: 0 0 24px 0;">
-                                <strong style="color: #fca5a5; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; display: inline-block; margin-bottom: 8px;">🚨 2024 Global Status Alert</strong>
-                                <span style="display: block; font-size: 1.05rem; line-height: 1.6; color: rgba(255,255,255,0.95);">${lesson.status2024}</span>
-                            </div>
-
-                            <p style="line-height: 1.7; margin: 0 0 24px 0; opacity: 0.9; font-size: 1.05rem;">${lesson.text}</p>
-
-                            <div class="lesson-fact" style="background: rgba(255,255,255,0.04); padding: 16px; border-radius: 12px; border-left: 4px solid var(--accent); font-style: italic; color: var(--accent-light); font-size: 0.95rem; margin: 0 0 24px 0; line-height: 1.5;">✨ ${lesson.fact}</div>
-                            
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 10px; flex-wrap: wrap; gap: 16px;">
-                                <small style="opacity: 0.6; font-size: 0.85rem;">Verified UN DESA Data • Goal ${lesson.goal}</small>
-                                <button class="lesson-btn" style="padding: 12px 28px; font-size: 0.95rem; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">Learn More →</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                    <article class="lesson-card ${isLearned ? 'completed' : ''}" data-id="${lesson.id}" data-goal="${lesson.goal}">
+                        <span class="guide-eyebrow">Goal ${lesson.goal}</span>
+                        <h4>${lesson.title}</h4>
+                        <p>${lesson.summary}</p>
+                        <div class="lesson-actions"><button class="lesson-btn">Explore this goal →</button>
+                        <a href="https://sdgs.un.org/goals/goal${lesson.goal}" target="_blank" rel="noopener noreferrer">UN source ↗</a></div>
+                    </article>`;
             }).join('');
 
             // Inject into both modal and landing page section
@@ -2146,28 +2094,13 @@
                     btn.addEventListener('click', (e) => {
                         const card = e.target.closest('.lesson-card');
                         const goalNum = card.dataset.goal;
-                        const id = card.dataset.id;
-
-                        // Show the detailed modal
-                        if (typeof showSdgLesson === 'function') {
-                            showSdgLesson(goalNum);
-                        }
-
-                        // Mark as preliminary learned for streak but keep button active for repeat learning
-                        const learnedArr = JSON.parse(localStorage.getItem('vibemap_learned') || '[]');
-                        if (!learnedArr.includes(id)) {
-                            learnedArr.push(id);
-                            localStorage.setItem('vibemap_learned', JSON.stringify(learnedArr));
-                            recordVisitToday();
-                            renderStreak();
-                            toast(`🌟 Goal ${goalNum} explored! Streak updated.`, 'success');
-                            renderLessons();
-                        }
+                        showSdgLesson(goalNum);
                     });
                 });
             });
         };
 
+        refreshLessons = renderLessons;
         // Render initially for landing page
         renderLessons();
 
@@ -2185,6 +2118,8 @@
 
         // Unified Function to show the main landing guide section
         const showMainGuide = () => {
+            if (S.ecoGameActive || !dom.gameModal.classList.contains('hidden')) dom.gameExitBtn.click();
+            dom.landingPage.inert = false;
             // 1. Close all active modals/overlays
             if (dom.eduModal) dom.eduModal.classList.add('hidden');
             if (dom.lessonPage) dom.lessonPage.classList.add('hidden');
@@ -2201,6 +2136,8 @@
 
             // 4. Show landing page and scroll to section
             dom.landingPage.classList.remove('hidden');
+            setMapAccessibility(false);
+            document.getElementById('landing-edu-section').classList.remove('hidden');
             const section = document.getElementById('landing-edu-section');
             if (section) {
                 // Short timeout to ensure display:none is gone before scrolling
@@ -2210,20 +2147,22 @@
             }
         };
 
+        showLearningGuide = () => { showMainGuide(); recordView('learn'); };
+
         // Scroll to section instead of opening modal from landing page button
         if (dom.lpEduScrollBtn) {
-            dom.lpEduScrollBtn.addEventListener('click', showMainGuide);
+            dom.lpEduScrollBtn.addEventListener('click', showLearningGuide);
         }
 
         // Return to Guide from the map
         if (dom.mapEduBtn) {
-            dom.mapEduBtn.addEventListener('click', showMainGuide);
+            dom.mapEduBtn.addEventListener('click', showLearningGuide);
         }
 
         if (dom.landingEduBtn) dom.landingEduBtn.addEventListener('click', show);
         if (dom.sidebarEduBtn) dom.sidebarEduBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            showMainGuide();
+            showLearningGuide();
             // Close sidebar if open
             if (S.sidebarOpen) dom.sidebarClose.click();
         });
@@ -2398,11 +2337,11 @@
                 const data = SDG_LESSONS[i];
                 if (!data) continue;
                 html += `
-                    <div class="sdg-card goal-${i}" data-goal="${i}">
+                    <button type="button" class="sdg-card goal-${i}" data-goal="${i}">
                         <div class="sdg-num">${i}</div>
                         <h4>${data.title}</h4>
                         <p>${data.fact}</p>
-                    </div>
+                    </button>
                 `;
             }
             dom.sdgTrack.innerHTML = html;
@@ -2410,14 +2349,22 @@
 
         renderTrack();
 
+        let returnFocus;
+        let returnToModal = false;
+        let returnToLanding = false;
         const showSdg = (num) => {
             const data = SDG_LESSONS[num];
             if (!data) return;
+            returnFocus = document.activeElement;
+            returnToModal = !dom.eduModal.classList.contains('hidden');
+            returnToLanding = !dom.landingPage.classList.contains('hidden');
 
+            recordView('goal-' + num);
             dom.lessonPage.style.setProperty('--hero-color', `var(--goal-${num})`);
             dom.lpGoalIcon.src = `https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png`;
             dom.lpGoalNum.textContent = 'SDG Goal ' + num;
             dom.lpGoalTitle.textContent = data.title;
+            $('#lp-un-source').href = `https://sdgs.un.org/goals/goal${num}`;
             dom.lpGoalRole.textContent = data.role;
             dom.lpGoalFact.textContent = data.fact;
             dom.lpGoalAction.textContent = data.action;
@@ -2436,26 +2383,55 @@
 
             // Animations and visibility
             dom.eduModal.classList.add('hidden'); // Hide the guide while deep dive is open
+            dom.landingPage.inert = true;
+            dom.landingPage.classList.add('hidden');
+            setMapAccessibility(false);
             dom.lessonPage.classList.remove('hidden');
             dom.lessonPage.scrollTo(0, 0);
+            dom.lessonPage.querySelector('.lesson-page-container').scrollTo(0, 0);
+            dom.lessonBack.focus({ preventScroll: true });
 
             // Set current goal for completion
             dom.lpCompleteBtn.onclick = () => {
+                const learned = JSON.parse(localStorage.getItem('vibemap_learned') || '[]');
+                const id = `p${num}`;
+                if (!learned.includes(id)) {
+                    learned.push(id);
+                    localStorage.setItem('vibemap_learned', JSON.stringify(learned));
+                }
                 recordVisitToday();
                 renderStreak();
-                if (typeof confetti === 'function') {
-                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.7 }, colors: ['#10b981', '#ffffff'] });
-                }
                 toast(`🎯 Lesson Complete! Streak updated.`, 'success');
                 hideSdgPage();
+                refreshLessons();
             };
         };
 
+        showSdgLesson = showSdg;
+
         const hideSdgPage = () => {
+            recordView(returnToLanding ? 'learn' : 'map');
             dom.lessonPage.classList.add('hidden');
-            dom.eduModal.classList.remove('hidden'); // Restore guide
+            dom.landingPage.inert = false;
+            if (returnToLanding) dom.landingPage.classList.remove('hidden');
+            if (returnToModal) dom.eduModal.classList.remove('hidden');
+            setMapAccessibility(dom.landingPage.classList.contains('hidden'));
+            const focus = returnFocus?.getClientRects().length ? returnFocus : returnToLanding ? dom.lpEduScrollBtn : dom.menuBtn;
+            focus?.focus({ preventScroll: true });
         };
         dom.lessonBack.addEventListener('click', hideSdgPage);
+        dom.lessonPage.addEventListener('keydown', event => {
+            if (event.key === 'Escape') hideSdgPage();
+        });
+
+        document.getElementById('sdg-icon-grid').addEventListener('click', event => {
+            const tile = event.target.closest('[data-goal]');
+            if (tile) showSdg(tile.dataset.goal);
+        });
+        dom.infoSdg.addEventListener('click', event => {
+            const badge = event.target.closest('[data-goal]');
+            if (badge) showSdg(badge.dataset.goal);
+        });
 
         dom.sdgTrack.addEventListener('click', (e) => {
             const card = e.target.closest('.sdg-card');
@@ -2478,7 +2454,8 @@
         let timeLeft = 0;
         let gameMarkers = [];
         let gameActive = false;
-        let recallData = []; 
+        let recallData = [];
+        let gamePlaces = [];
 
         const updateClock = (s) => {
             const m = Math.floor(s / 60), sec = s % 60;
@@ -2502,9 +2479,12 @@
         const endChallenge = () => {
             stopGameTimer();
             gameActive = false;
+            S.ecoGameActive = false;
+            updateEcoMarkers();
             document.body.classList.remove('game-active');
             dom.gameTimerBar.classList.remove('active');
             dom.gameRecallPanel.classList.remove('active');
+            dom.gameRecallPanel.classList.add('hidden');
             
             // Calculate Score
             let score = 0;
@@ -2512,8 +2492,7 @@
             const userAnswers = Array.from(inputs).map(i => i.value.trim().toLowerCase()).filter(v => v);
             
             // Get all valid location names
-            const validNames = SUSTAINABLE_LOCATIONS
-                .filter(l => !l.name.toLowerCase().includes('carlisle'))
+            const validNames = gamePlaces
                 .map(l => l.name.toLowerCase());
 
             // A name is correct if it matches any valid name exactly (basic)
@@ -2526,7 +2505,7 @@
                 }
             });
 
-            const total = SUSTAINABLE_LOCATIONS.filter(l => !l.name.toLowerCase().includes('carlisle')).length;
+            const total = gamePlaces.length;
             dom.gameFinalScore.textContent = `${score} / ${total}`;
             
             if (score === total) dom.gameFeedback.textContent = "Unbelievable! Perfect score. You are a sustainability master! 🏆";
@@ -2546,8 +2525,9 @@
 
         const startRecallPhase = () => {
             stopGameTimer();
+            $('#game-ready-btn').hidden = true;
             dom.gamePhaseLabel.textContent = 'Recall Phase';
-            timeLeft = 15 * 60; // 15 minutes
+            timeLeft = 5 * 60; // 15 minutes
             updateClock(timeLeft);
             
             // Hide Markers
@@ -2555,11 +2535,11 @@
 
             // Setup Recall Panel
             dom.gameRecallInputs.innerHTML = '';
-            const total = SUSTAINABLE_LOCATIONS.filter(l => !l.name.toLowerCase().includes('carlisle')).length;
+            const total = gamePlaces.length;
             for (let i = 0; i < total; i++) {
                 const group = document.createElement('div');
                 group.className = 'recall-input-group';
-                group.innerHTML = `<span>${i + 1}.</span><input type="text" placeholder="Location name...">`;
+                group.innerHTML = `<label for="recall-${i}">Place ${i + 1}</label><input id="recall-${i}" type="text" placeholder="Location name...">`;
                 dom.gameRecallInputs.appendChild(group);
             }
             
@@ -2574,19 +2554,23 @@
         };
 
         const startMemorizationPhase = () => {
+            $('#game-ready-btn').hidden = false;
             gameActive = true;
+            S.ecoGameActive = true;
+            updateEcoMarkers();
             document.body.classList.add('game-active');
             dom.gameModal.classList.add('hidden');
             dom.gameTimerBar.classList.add('active');
             dom.gamePhaseLabel.textContent = 'Memorize!';
             
-            timeLeft = 5 * 60; // 5 minutes
+            timeLeft = 90; // A short study period for five places
             updateClock(timeLeft);
 
             // Show ALL markers
             clearChallengeMarkers();
-            SUSTAINABLE_LOCATIONS.forEach(loc => {
-                // Filter out Carlisle if any
+            gamePlaces = [...SUSTAINABLE_LOCATIONS].sort(() => Math.random() - .5).slice(0, 5);
+            gamePlaces.forEach(loc => {
+                // Show the selected places
                 if (loc.name.toLowerCase().includes('carlisle')) return;
 
                 const m = L.marker([loc.lat, loc.lng], {
@@ -2596,8 +2580,7 @@
                 gameMarkers.push(m);
             });
 
-            // Focus on Luzern
-            map.flyTo([47.0500, 8.3090], 14, { duration: 2 });
+            map.fitBounds(gamePlaces.map(loc => [loc.lat, loc.lng]), { padding: [70, 100], maxZoom: 14 });
 
             gameTimer = setInterval(() => {
                 timeLeft--;
@@ -2608,6 +2591,7 @@
 
         // Event Listeners
         dom.guideStartGameBtn?.addEventListener('click', () => {
+            openGuideMap();
             showPhasePopup('intro');
             // Hide landing page to show map
             dom.landingPage.classList.add('hidden');
@@ -2615,43 +2599,133 @@
         });
 
         dom.gameStartBtn.addEventListener('click', startMemorizationPhase);
+        $('#game-ready-btn').addEventListener('click', startRecallPhase);
+        $('#game-cancel-btn').addEventListener('click', () => dom.gameExitBtn.click());
+        $('#game-study-exit').addEventListener('click', () => dom.gameExitBtn.click());
         dom.gameSubmitBtn.addEventListener('click', endChallenge);
         dom.gameReplayBtn.addEventListener('click', () => {
             showPhasePopup('intro');
         });
         dom.gameExitBtn.addEventListener('click', () => {
+            stopGameTimer();
+            gameActive = false;
+            clearChallengeMarkers();
+            S.ecoGameActive = false;
+            updateEcoMarkers();
+            dom.gameTimerBar.classList.remove('active');
+            dom.gameRecallPanel.classList.add('hidden');
+            dom.gameRecallPanel.classList.remove('active');
             dom.gameModal.classList.add('hidden');
             // Show landing page again? No, stay on map but exiting game mode
             document.body.classList.remove('game-active');
+            dom.menuBtn.focus({ preventScroll: true });
         });
     };
 
     initEcoData();
-    initFeaturedCarousel();
+    initLocalGuide(); // The map opens without an automatic carousel.
     initEduModal();
     initSdgLessons();
     updateEcoScore();
     renderDailyChallenge();
 
-    // App-open gamification: Logging in extends streak!
-    const streakExtended = recordVisitToday();
+    // Progress is earned through optional activities, not by opening the site.
     renderStreak();
     updateProgressStrip();
 
-    if (streakExtended) {
-        setTimeout(() => {
-            const streak = calcStreak();
-            if (streak > 0) {
-                dom.menuBtn.classList.add('has-notification');
-                toast(`🔥 Daily Streak Extended! You're on a ${streak}-Day streak!`, 'success', 5000);
-                if (typeof confetti === 'function') confetti({ particleCount: 75, spread: 80, origin: { y: 0.8 }, zIndex: 99999 });
-            }
-            updateProgressStrip();
-        }, 1500); // Slight delay for dramatic effect after loading
+    initEcoGame(); // Call new game init
+    function showView(next) {
+        if (NAV.active) stopNavigation();
+        if (S.ecoGameActive || !dom.gameModal.classList.contains('hidden')) dom.gameExitBtn.click();
+        if (S.sidebarOpen) dom.sidebarClose.click();
+        if (S.layersOpen) dom.layersClose.click();
+        document.querySelectorAll('.modal-overlay').forEach(modal => modal.classList.add('hidden'));
+        dom.infoCard.classList.add('hidden');
+        if (next === 'directions' && S.dirOpen) return;
+        if (S.dirOpen) closeDirections();
+        if (next === 'home') {
+            dom.lessonPage.classList.add('hidden');
+            dom.landingPage.inert = false;
+            dom.landingPage.classList.remove('hidden');
+            setMapAccessibility(false);
+            recordView('home');
+            dom.landingPage.scrollTo({ top: 0, behavior: 'instant' });
+            dom.startExploringBtn.focus({ preventScroll: true });
+        } else if (next === 'learn') showLearningGuide();
+        else if (next.startsWith('goal-')) { showLearningGuide(); showSdgLesson(+next.slice(5)); }
+        else { openGuideMap(); if (next === 'directions') openDirections(); }
+    }
+    document.querySelectorAll('[data-site-view]').forEach(button => button.addEventListener('click', () => {
+        const next = button.dataset.siteView;
+        if (next === view) return;
+        restoringView = true;
+        showView(next);
+        restoringView = false;
+        recordView(next);
+    }));
+    window.addEventListener('popstate', () => {
+        const target = GreenNavigation.parse(location.hash);
+        restoringView = true;
+        if (!location.hash && location.search) { showView('map'); parseUrlParams(); }
+        else showView(target.view === 'goal' ? 'goal-' + target.goal : target.view);
+        restoringView = false;
+    });
+    if (location.hash) {
+        const target = GreenNavigation.parse(location.hash);
+        restoringView = true;
+        showView(target.view === 'goal' ? 'goal-' + target.goal : target.view);
+        restoringView = false;
+    } else {
+        restoringView = true;
+        parseUrlParams();
+        restoringView = false;
+        if (!location.search) recordView('home', true);
     }
 
-    initEcoGame(); // Call new game init
-    parseUrlParams();
+    // Dialog lifecycle: hide background controls, keep keyboard focus inside and restore it on close.
+    const dialogs = [...document.querySelectorAll('.modal-overlay, #game-modal, #sidebar-menu')];
+    let activeDialog = null;
+    let previousFocus = null;
+    function syncDialogs() {
+        const next = dialogs.find(dialog => !dialog.classList.contains('hidden'));
+        dialogs.forEach(dialog => dialog.inert = dialog !== next);
+        dom.infoCard.inert = Boolean(next);
+        dom.dirPanel.inert = Boolean(next) || !S.dirOpen;
+        dom.layersPanel.inert = Boolean(next) || !S.layersOpen;
+        dom.lessonPage.inert = Boolean(next);
+        if (next === activeDialog) return;
+        if (next) {
+            previousFocus = document.activeElement;
+            next.setAttribute('role', 'dialog');
+            next.setAttribute('aria-modal', 'true');
+            next.setAttribute('aria-label', next.querySelector('h2')?.textContent || 'Menu');
+            next.querySelector('button, input, a')?.focus();
+        } else if (activeDialog && previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus();
+        activeDialog = next;
+        document.body.classList.toggle('dialog-open', Boolean(next));
+        setMapAccessibility(!next && dom.landingPage.classList.contains('hidden') && dom.lessonPage.classList.contains('hidden'));
+        dom.landingPage.inert = Boolean(next) || !dom.lessonPage.classList.contains('hidden');
+    }
+    const observer = new MutationObserver(syncDialogs);
+    dialogs.forEach(dialog => observer.observe(dialog, { attributes: true, attributeFilter: ['class'] }));
+    const closeDialog = dialog => {
+        const close = dialog.querySelector('[id$="close-btn"], #game-cancel-btn');
+        if (close) close.click();
+        else dialog.classList.add('hidden');
+    };
+    dialogs.forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog && dialog.id !== 'sidebar-menu') closeDialog(dialog); }));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && S.ecoGameActive) { event.preventDefault(); dom.gameExitBtn.click(); return; }
+        if (!activeDialog) return;
+        if (event.key === 'Escape') { event.preventDefault(); closeDialog(activeDialog); }
+        if (event.key === 'Tab') {
+            const controls = [...activeDialog.querySelectorAll('button, a[href], input, textarea, select')].filter(el => !el.disabled && el.getClientRects().length);
+            const first = controls[0], last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }
+    });
+    syncDialogs();
 
     // ── PWA: Register Service Worker ──────────────────
     if ('serviceWorker' in navigator) {
@@ -2662,6 +2736,6 @@
         });
     }
 
-    console.log('🌱 Green Luzern v2 loaded — Sustainability map with retention + streak + PWA!');
+    console.log('Green Luzern local guide loaded');
 })();
 
