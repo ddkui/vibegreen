@@ -75,25 +75,26 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap"
         rel="stylesheet">
 
     <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
 
     <link rel="stylesheet" href="style.css?v=5">
-    <link rel="stylesheet" href="guide.css?v=4">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="guide.css?v=7">
+
 
     <!-- Critical: prevents flash of map before stylesheet loads -->
     <style>
@@ -175,71 +176,71 @@
             <div class="sdg-full-grid" id="sdg-icon-grid">
                 <!-- Injected via JS for better control, but here's the structure -->
                 <button type="button" class="sdg-grid-item" data-goal="1" aria-label="Learn about Goal 1">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/1.png" alt="Goal 1">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/1.png" alt="Goal 1">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="2" aria-label="Learn about Goal 2">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/2.png" alt="Goal 2">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/2.png" alt="Goal 2">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="3" aria-label="Learn about Goal 3">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/3.png" alt="Goal 3">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/3.png" alt="Goal 3">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="4" aria-label="Learn about Goal 4">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/4.png" alt="Goal 4">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/4.png" alt="Goal 4">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="5" aria-label="Learn about Goal 5">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/5.png" alt="Goal 5">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/5.png" alt="Goal 5">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="6" aria-label="Learn about Goal 6">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/6.png" alt="Goal 6">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/6.png" alt="Goal 6">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="7" aria-label="Learn about Goal 7">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/7.png" alt="Goal 7">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/7.png" alt="Goal 7">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="8" aria-label="Learn about Goal 8">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/8.png" alt="Goal 8">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/8.png" alt="Goal 8">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="9" aria-label="Learn about Goal 9">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/9.png" alt="Goal 9">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/9.png" alt="Goal 9">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="10" aria-label="Learn about Goal 10">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/10.png" alt="Goal 10">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/10.png" alt="Goal 10">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="11" aria-label="Learn about Goal 11">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/11.png" alt="Goal 11">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/11.png" alt="Goal 11">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="12" aria-label="Learn about Goal 12">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/12.png" alt="Goal 12">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/12.png" alt="Goal 12">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="13" aria-label="Learn about Goal 13">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/13.png" alt="Goal 13">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/13.png" alt="Goal 13">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="14" aria-label="Learn about Goal 14">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/14.png" alt="Goal 14">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/14.png" alt="Goal 14">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="15" aria-label="Learn about Goal 15">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/15.png" alt="Goal 15">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/15.png" alt="Goal 15">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="16" aria-label="Learn about Goal 16">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/16.png" alt="Goal 16">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/16.png" alt="Goal 16">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="17" aria-label="Learn about Goal 17">
-                    <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/17.png" alt="Goal 17">
+                    <img loading="lazy" decoding="async" width="100" height="100" src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/17.png" alt="Goal 17">
                     <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
             </div>
@@ -256,7 +257,7 @@
                 <div>
                     <h4>Supporting Swisstainable</h4>
                     <p>Switzerland Tourism's Swisstainable program labels businesses that are committed to sustainable
-                        development. Green Luzern helps you identify these certified spots across the city.</p>
+                        development. Green Luzern helps you identify participating places and their programme levels across the city.</p>
                 </div>
             </div>
 
@@ -285,12 +286,12 @@
                     <a class="footer-sc-link" href="privacy.html">Privacy</a>
                     <a href="https://www.instagram.com/greenluzern?igsh=MXQ3dWV4ZTc0eno4NQ==" target="_blank"
                         class="footer-sc-link">
-                        <i class="ph-fill ph-instagram-logo"></i>
+                        <i class="ph ph-instagram-logo"></i>
                         <span>instagram</span>
                     </a>
                     <a href="https://x.com/greenluzern?s=11" target="_blank"
                         class="footer-sc-link">
-                        <i class="ph-fill ph-twitter-logo"></i>
+                        <i class="ph ph-twitter-logo"></i>
                         <span>X (Twitter)</span>
                     </a>
                 </div>
@@ -508,6 +509,7 @@
             </div>
             <p id="info-card-subtitle" class="info-subtitle">—</p>
             <p id="info-description" hidden></p>
+            <section id="info-evidence" aria-label="Listing evidence" hidden></section>
             <div id="info-sdg-container" class="info-sdg-row"></div>
             <div class="info-card-actions">
                 <button class="info-action" id="info-directions-btn">
@@ -696,12 +698,10 @@
     </div>
 
     <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js"></script>
-    <script src="data.js?v=2"></script>
+    <script defer src="data.js?v=3"></script>
     <!-- Immersive Lesson Page (Premium Slide-based deep dive) -->
     <div id="lesson-page" class="hidden">
         <div class="lesson-page-nav">
@@ -824,10 +824,11 @@
         <button id="game-submit-btn" class="primary-btn" style="width:100%">Submit Final Answers</button>
     </div>
 
-    <script src="navigation.js?v=1"></script>
-    <script src="routing.js?v=1"></script>
-    <script src="app.js?v=10"></script>
-    <script src="landing-motion.js?v=1"></script>
+    <script defer src="navigation.js?v=1"></script>
+    <script defer src="routing.js?v=1"></script>
+    <script defer src="map-loader.js?v=1"></script>
+    <script defer src="app.js?v=13"></script>
+    <script defer src="landing-motion.js?v=1"></script>
 </body>
 
 </html>

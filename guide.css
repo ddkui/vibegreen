@@ -237,7 +237,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 #game-recall-panel { background: #f6f5ef; color: #23382d; border-color: #d1d8cd; }
 .recall-input-group { display: flex; align-items: center; gap: 12px; }
 .recall-input-group input { min-width: 0; flex: 1; }
-@media (max-width: 700px) {
+@media (max-width: 768px) {
     .guide-header { gap: 14px; align-items: center; }
     .guide-header nav { gap: 4px; justify-content: flex-end; }
     .guide-header nav a { max-width: 75px; line-height: 1.2; }
@@ -276,7 +276,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .guide-note { flex-wrap: wrap; }
     .guide-note a { margin-left: 35px; }
 }
-@media (max-width: 700px) {
+@media (max-width: 768px) {
     .guide-header { min-height: 86px; }
     .guide-header nav { gap: 18px; font-size: 14px; }
     .guide-brand { font-size: 18px; }
@@ -317,7 +317,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 /* Leave clear space around the mobile navigation and the active place or route. */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
     #suggest-btn, #fab-stack { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
     #info-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); max-height: 48dvh; }
     body:has(#info-card:not(.hidden)) #fab-stack,
@@ -325,10 +325,36 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
     .planning-route #fab-stack, .planning-route #suggest-btn { display: none; }
 }
 
-@media (min-width: 701px) {
+@media (min-width: 769px) {
     .planning-route #map-site-nav { left: 420px; right: 0; transform: none; justify-content: center; gap: 0; margin: 0 12px; }
     .planning-route #map-site-nav button { flex-direction: column; gap: 2px; padding: 6px 10px; font-size: 12px; }
 }
-@media (min-width: 701px) and (max-width: 900px) {
+@media (min-width: 769px) and (max-width: 900px) {
     .planning-route #map-site-nav button { flex: 1; min-width: 0; padding: 6px 2px; font-size: 11px; }
 }
+
+/* Comfortable touch targets and one consistent phone/tablet breakpoint. */
+:root { --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.guide-header nav button, .guide-header nav a, .page-navigation a { min-height: 44px; display: inline-flex; align-items: center; }
+.guide-hero > *, .guide-header > *, .lp-section { min-width: 0; }
+@media (max-width: 768px) {
+    .guide-header { flex-wrap: wrap; padding-block: 12px; gap: 10px; }
+    .guide-header nav { gap: 16px; }
+    .guide-intro h1 { font-size: clamp(42px, 12vw, 60px); }
+    .guide-map-top { flex-wrap: wrap; }
+    #directions-panel { width: 100%; left: 0; right: 0; }
+    .planning-route #directions-panel { height: min(62dvh, calc(100dvh - 120px)); }
+    .dir-field-wrap input, #search-input, .modal-content input, .modal-content textarea { font-size: 16px; }
+    #info-card { left: 12px; right: 12px; width: auto; }
+}
+@media (max-height: 500px) and (max-width: 768px) {
+    .planning-route #directions-panel { height: calc(100dvh - 64px); }
+    #info-card { max-height: calc(100dvh - 160px); }
+    #fab-stack { flex-direction: row; }
+}
+#info-evidence { border-top: 1px solid #d1d8cd; padding-top: 12px; margin-top: 14px; font-size: 14px; line-height: 1.45; }
+#info-evidence h4 { font-size: 14px; margin-bottom: 4px; }
+#info-evidence small { display: block; color: #66746b; margin-top: 8px; }
+.evidence-links { margin-top: 8px; }
+.evidence-links a { display: inline-block; padding-block: 6px; text-underline-offset: 3px; }
+.info-card-actions { position: sticky; bottom: 0; background: #fff; }

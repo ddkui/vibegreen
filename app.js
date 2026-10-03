@@ -17,6 +17,18 @@
 
     // Keep Leaflet's existing places, routes, and controls over a crisp vector basemap.
     function createStreetLayer(onFallback = () => {}) {
+        const layer = L.layerGroup();
+        let started = false;
+        layer.on('add', () => {
+            if (started) return;
+            started = true;
+            loadStreetRenderer().catch(() => {}).then(() => {
+                layer.addLayer(createLoadedStreetLayer(onFallback));
+            });
+        });
+        return layer;
+    }
+    function createLoadedStreetLayer(onFallback = () => {}) {
         const raster = () => L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 });
         if (!window.maplibregl || !L.maplibreGL) return raster();
         try {
@@ -281,7 +293,7 @@
         { text: 'Visit a zero-waste shop 🛍️', category: 'zero-waste' },
         { text: 'Try a vegan meal 🌱', category: 'vegan' },
         { text: 'Rent a bike for your next trip 🚲', category: 'bike-rental' },
-        { text: 'Check out an eco-certified hotel 🏨', category: 'eco-hotel' },
+        { text: 'Check out a hotel’s sustainability programme 🏨', category: 'eco-hotel' },
         { text: 'Plug in at an EV station ⚡', category: 'ev-charging' },
         { text: 'Find something second-hand today 👕', category: 'secondhand' },
         { text: 'Visit a Swisstainable spot 🇨🇭', category: 'swisstainable' },
@@ -423,10 +435,8 @@
     setMapStyle(getSettings().style);
 
     // ── Loading ────────────────────────────────────────
-    setTimeout(() => {
-        dom.loadingScreen.remove();
-        document.body.classList.add('guide-ready');
-    }, 150);
+    dom.loadingScreen.remove();
+    document.body.classList.add('guide-ready');
 
     // ── Search ─────────────────────────────────────────
     let searchTimer = null;
@@ -525,7 +535,7 @@
         if (!infoId) { btn.classList.remove('saved-active'); btn.querySelector('i').className = 'ph ph-heart'; btn.querySelector('span').textContent = 'Save'; return; }
         const s = isSaved(infoId);
         btn.classList.toggle('saved-active', s);
-        btn.querySelector('i').className = s ? 'ph-fill ph-heart' : 'ph ph-heart';
+        btn.querySelector('i').className = s ? 'ph-bold ph-heart' : 'ph ph-heart';
         btn.querySelector('span').textContent = s ? 'Saved' : 'Save';
     }
 
@@ -540,6 +550,7 @@
         dom.infoSub.textContent = fullName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         dom.infoSdg.innerHTML = '';
         $('#info-description').hidden = true;
+        $('#info-evidence').hidden = true;
         dom.infoCard.classList.remove('hidden');
         if (dom.featuredCarousel) dom.featuredCarousel.classList.add('hidden');
         updateInfoVisitedBtn();
@@ -567,7 +578,7 @@
         const fcSaveBtns = document.querySelectorAll(`.fc-save-btn[data-id="${infoId}"]`);
         fcSaveBtns.forEach(b => {
             b.style.color = nowSaved ? '#ef4444' : 'var(--text-secondary)';
-            b.innerHTML = `<i class="${nowSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
+            b.innerHTML = `<i class="${nowSaved ? 'ph-bold ph-heart' : 'ph ph-heart'}"></i>`;
         });
 
         toast(nowSaved ? '❤ Added to My Places' : 'Removed from My Places', 'info');
@@ -1676,7 +1687,17 @@
             S.ecoMarkers.find(item => item.loc.id === button.dataset.guideLocation)?.marker.fire('click');
         }));
         const preview = L.map('landing-map', { center: [47.051, 8.308], zoom: 14, zoomControl: false, scrollWheelZoom: false, dragging: false, touchZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false });
-        const previewTiles = createStreetLayer().addTo(preview);
+        // The small non-interactive preview needs no vector engine or WebGL context.
+        const previewTiles = L.tileLayer(TILES.light.url, { attribution: TILES.light.attr, maxZoom: 19 });
+        const previewElement = document.getElementById('landing-map');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(entries => {
+                if (!entries.some(entry => entry.isIntersecting)) return;
+                previewTiles.addTo(preview);
+                observer.disconnect();
+            }, { root: dom.landingPage, rootMargin: '100px' });
+            observer.observe(previewElement);
+        } else previewTiles.addTo(preview);
         previewTiles.on('tileerror', () => {
             document.querySelector('.guide-map-caption > span:first-child').textContent = 'Map preview unavailable. Explore the listings in the full guide.';
         });
@@ -1684,7 +1705,11 @@
             const cat = CATEGORIES[loc.category];
             L.circleMarker([loc.lat, loc.lng], { radius: 5, color: '#ffffff', weight: 2, fillColor: cat.color, fillOpacity: 1, interactive: false }).addTo(preview);
         });
-        new ResizeObserver(() => preview.invalidateSize()).observe(document.getElementById('landing-map'));
+        let previewResize;
+        new ResizeObserver(() => {
+            cancelAnimationFrame(previewResize);
+            previewResize = requestAnimationFrame(() => preview.invalidateSize());
+        }).observe(previewElement);
         updateEcoMarkers();
     }
 
@@ -1781,6 +1806,12 @@
                 dom.infoSub.textContent = catInfo.label + ' · ' + loc.address;
                 $('#info-description').textContent = loc.description;
                 $('#info-description').hidden = false;
+                const evidence = $('#info-evidence');
+                evidence.hidden = !loc.evidence;
+                if (loc.evidence) {
+                    const links = loc.evidence.sources.map(source => `<a href="${escapeHTML(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(source.label)} ↗</a>`).join(' · ');
+                    evidence.innerHTML = `<h4>Why it’s included</h4><p>${escapeHTML(loc.evidence.basis)}</p><div class="evidence-links">${links}</div><small>Sources reviewed ${escapeHTML(loc.evidence.reviewedAt)}${loc.coordinatePrecision === 'square' ? ' · Pin marks the square; find the venue or fountain on arrival.' : ' · Pin marks the building address.'}</small>`;
+                }
 
                 // Show SDG Badges
                 if (loc.sdg && loc.sdg.length > 0) {
@@ -1814,18 +1845,20 @@
         if (!dom.myPlacesList) return;
         const savedIds = Array.from(getSaved());
         const savedLocs = savedIds.map(id => SUSTAINABLE_LOCATIONS.find(l => l.id === id)).filter(Boolean);
+        const unavailable = savedIds.length - savedLocs.length;
+        const reviewNotice = unavailable ? `<p class="saved-review-note">${unavailable} saved ${unavailable === 1 ? 'listing is' : 'listings are'} under review and hidden from the public map. Your saved identifiers are kept.</p>` : '';
 
         if (savedLocs.length === 0) {
-            dom.myPlacesList.innerHTML = `
+            dom.myPlacesList.innerHTML = reviewNotice + `
                 <div class="saved-empty-state">
                     <i class="ph ph-heart-break"></i>
-                    <div>No saved places yet.<br>Click the heart icon on any place to save it here!</div>
+                    <div>${unavailable ? "No published saved places available." : "No saved places yet."}<br>Click the heart icon on any place to save it here!</div>
                 </div>
             `;
             return;
         }
 
-        dom.myPlacesList.innerHTML = savedLocs.map(loc => {
+        dom.myPlacesList.innerHTML = reviewNotice + savedLocs.map(loc => {
             const cat = CATEGORIES[loc.category];
             return `
                 <button type="button" class="saved-place-item" data-id="${loc.id}">
@@ -1905,7 +1938,7 @@
                         if (mo) mo.marker.fire('click');
                     }
                 }, 0);
-            }
+            } else toast('This listing is unavailable in the reviewed guide. Search for another place or address.', 'info', 5000);
         } else if (lat && lng) {
             openGuideMap();
             const pLat = parseFloat(lat);
