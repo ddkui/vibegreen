@@ -1,5 +1,5 @@
 // Green Luzern — Service Worker for offline support & PWA
-const CACHE_NAME = 'greenluzern-v5';
+const CACHE_NAME = 'greenluzern-v7';
 const PRECACHE = [
     '/',
     '/index.html',
@@ -7,6 +7,7 @@ const PRECACHE = [
     '/guide.css',
     '/app.js',
     '/routing.js',
+    '/navigation.js',
     '/landing-motion.js',
     '/data.js',
     '/logo.png',

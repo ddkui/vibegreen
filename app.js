@@ -77,12 +77,28 @@
         ecoGameActive: false,
     };
 
+    let restoringView = false;
+    let showLearningGuide;
+    let view = 'home';
+    function recordView(next, replace = false) {
+        view = next;
+        document.body.dataset.view = next;
+        document.querySelectorAll('[data-site-view]').forEach(button => {
+            const active = button.dataset.siteView === (next.startsWith('goal-') ? 'learn' : next);
+            if (active) button.setAttribute('aria-current', 'page');
+            else button.removeAttribute('aria-current');
+        });
+        if (restoringView) return;
+        if (location.hash === '#' + next) return;
+        history[replace ? 'replaceState' : 'pushState']({ view: next }, '', location.pathname + '#' + next);
+    }
+
     // ── Helpers ────────────────────────────────────────
     const $ = s => document.querySelector(s);
     const $$ = s => document.querySelectorAll(s);
     const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-    function fmt(m) { return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`; }
+    function fmt(m) { return GreenNavigation.distance(m, getSettings().unit); }
     function dur(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h} hr ${m} min` : `${m} min`; }
     function durShort(s) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? `${h}h ${m}m` : `${m} min`; }
 
@@ -402,7 +418,7 @@
         tileLayer.on('tileerror', () => {
             document.getElementById('map-result-count').textContent = 'Map tiles are unavailable. You can still search the guide.';
         });
-        dom.layerCards.forEach(card => card.classList.toggle('active', card.dataset.style === S.tileKey));
+        dom.layerCards.forEach(card => { card.classList.toggle('active', card.dataset.style === S.tileKey); card.setAttribute('aria-pressed', String(card.dataset.style === S.tileKey)); });
     }
     setMapStyle(getSettings().style);
 
@@ -416,16 +432,18 @@
     let searchTimer = null;
     dom.searchInput.addEventListener('input', () => {
         const v = dom.searchInput.value.trim();
+        mainSearchRevision++;
         dom.searchClear.classList.toggle('hidden', v.length === 0);
         clearTimeout(searchTimer);
         if (v.length < 2) { dom.searchResults.classList.remove('visible'); return; }
-        searchTimer = setTimeout(() => doSearch(v), 350);
+        doSearch(v, false);
     });
     dom.searchInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') { clearTimeout(searchTimer); doSearch(dom.searchInput.value.trim()); }
         if (e.key === 'Escape') { dom.searchResults.classList.remove('visible'); dom.searchInput.blur(); }
     });
     dom.searchClear.addEventListener('click', () => {
+        mainSearchRevision++;
         dom.searchInput.value = ''; dom.searchClear.classList.add('hidden');
         dom.searchResults.classList.remove('visible'); dom.searchInput.focus();
     });
@@ -433,7 +451,9 @@
         if (!e.target.closest('#search-bar')) dom.searchResults.classList.remove('visible');
     });
 
-    async function doSearch(q) {
+    let mainSearchRevision = 0;
+    async function doSearch(q, external = true) {
+        const revision = ++mainSearchRevision;
         if (!q) return;
         const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
         const matches = SUSTAINABLE_LOCATIONS.filter(loc => `${loc.name} ${loc.address} ${CATEGORIES[loc.category].label}`.toLowerCase().includes(q.toLowerCase()));
@@ -449,20 +469,26 @@
             }));
             return;
         }
+        if (!external) {
+            dom.searchResults.innerHTML = '<p class="search-hint">No guide match. Press Enter or Search to look up an address.</p>';
+            dom.searchResults.classList.add('visible');
+            return;
+        }
         try {
             const data = await geocode(q, 6);
+            if (revision !== mainSearchRevision || dom.searchInput.value.trim() !== q) return;
             if (!data.length) {
                 dom.searchResults.innerHTML = '<div class="sr-item"><div class="sr-text"><div class="sr-name" style="color:var(--text-muted)">No results found</div></div></div>';
                 dom.searchResults.classList.add('visible'); return;
             }
             dom.searchResults.innerHTML = data.map(d => `
-                <div class="sr-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${d.display_name.split(',')[0].replace(/"/g, '&quot;')}">
+                <button type="button" class="sr-item" data-lat="${d.lat}" data-lon="${d.lon}" data-name="${escapeHTML(d.display_name.split(',')[0])}">
                     <div class="sr-icon"><i class="ph ph-map-pin"></i></div>
                     <div class="sr-text">
-                        <div class="sr-name">${d.display_name.split(',')[0]}</div>
-                        <div class="sr-detail">${d.display_name}</div>
+                        <div class="sr-name">${escapeHTML(d.display_name.split(',')[0])}</div>
+                        <div class="sr-detail">${escapeHTML(d.display_name)}</div>
                     </div>
-                </div>`).join('');
+                </button>`).join('');
             dom.searchResults.classList.add('visible');
             dom.searchResults.querySelectorAll('.sr-item').forEach(el => {
                 el.addEventListener('click', () => {
@@ -482,6 +508,8 @@
     function updateInfoVisitedBtn() {
         const btn = dom.infoVisitedBtn;
         if (!btn) return;
+        btn.hidden = !infoId;
+        btn.setAttribute('aria-pressed', String(infoId ? isVisited(infoId) : false));
         if (!infoId) { btn.classList.remove('visited-active'); btn.querySelector('i').className = 'ph ph-check-circle'; btn.querySelector('span').textContent = 'Visited'; return; }
         const v = isVisited(infoId);
         btn.classList.toggle('visited-active', v);
@@ -492,6 +520,8 @@
     function updateInfoSavedBtn() {
         const btn = dom.infoSavedBtn;
         if (!btn) return;
+        btn.hidden = !infoId;
+        btn.setAttribute('aria-pressed', String(infoId ? isSaved(infoId) : false));
         if (!infoId) { btn.classList.remove('saved-active'); btn.querySelector('i').className = 'ph ph-heart'; btn.querySelector('span').textContent = 'Save'; return; }
         const s = isSaved(infoId);
         btn.classList.toggle('saved-active', s);
@@ -507,7 +537,9 @@
         }).addTo(map);
         infoLat = lat; infoLng = lng; infoName = name; infoId = locId;
         dom.infoTitle.textContent = name;
-        dom.infoSub.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        dom.infoSub.textContent = fullName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        dom.infoSdg.innerHTML = '';
+        $('#info-description').hidden = true;
         dom.infoCard.classList.remove('hidden');
         if (dom.featuredCarousel) dom.featuredCarousel.classList.add('hidden');
         updateInfoVisitedBtn();
@@ -518,7 +550,8 @@
         dom.infoCard.classList.add('hidden');
         if (infoMarker) { map.removeLayer(infoMarker); infoMarker = null; }
         infoId = null;
-        if (dom.featuredCarousel) dom.featuredCarousel.classList.remove('hidden');
+        map.closePopup();
+        dom.searchInput.focus({ preventScroll: true });
     });
 
     // Saved button handler
@@ -592,7 +625,7 @@
             setPoint('dest', infoLat, infoLng, infoName);
             dom.infoCard.classList.add('hidden');
             if (infoMarker) { map.removeLayer(infoMarker); infoMarker = null; }
-            if (!S.origin) dom.locateBtn.click();
+            if (!S.origin) dom.dirOrigin.focus();
         }
     });
 
@@ -635,10 +668,11 @@
 
     // ── Map Click → info card with reverse geocode ────
     map.on('click', async e => {
-        if (S.dirOpen) return; // don't interfere when directions panel is open
+        if (S.dirOpen || S.ecoGameActive || NAV.active) return;
         const { lat, lng } = e.latlng;
         showLocation(lat, lng, 'Loading...', '');
         const name = await reverseGeocode(lat, lng);
+        if (infoLat !== lat || infoLng !== lng || dom.infoCard.classList.contains('hidden')) return;
         const shortName = name.split(',')[0];
         dom.infoTitle.textContent = shortName;
         dom.infoSub.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -697,6 +731,7 @@
                 body: JSON.stringify({ name, address, lat, lng, category, description, submitted_by: submitter })
             });
 
+            if (!res.headers.get('content-type')?.includes('application/json')) throw new Error('Submission service unavailable');
             const data = await res.json();
 
             if (res.ok) {
@@ -710,7 +745,7 @@
             }
         } catch (err) {
             console.error('Submission error:', err);
-            dom.suggestStatus.textContent = 'Network error. Please try again later.';
+            dom.suggestStatus.textContent = 'The submission service is unavailable. Your form is still here; please try again later.';
             dom.suggestStatus.className = 'suggest-status error';
         } finally {
             dom.suggestSubmitBtn.disabled = false;
@@ -722,7 +757,7 @@
     function getSettings() {
         try {
             const settings = JSON.parse(localStorage.getItem('vibemap_settings') || '{}') || {};
-            return { ...settings, style: Object.hasOwn(TILES, settings.style) ? settings.style : 'light', unit: settings.unit || 'metric' };
+            return { ...settings, style: Object.hasOwn(TILES, settings.style) ? settings.style : 'light', unit: settings.unit === 'imperial' ? 'imperial' : 'metric' };
         } catch { return { style: 'light', unit: 'metric' }; }
     }
 
@@ -745,15 +780,18 @@
         dom.stButtons.forEach(btn => {
             if (btn.dataset.style) {
                 btn.classList.toggle('active', btn.dataset.style === current.style);
+                btn.setAttribute('aria-pressed', String(btn.dataset.style === current.style));
             }
             if (btn.dataset.unit) {
                 btn.classList.toggle('active', btn.dataset.unit === current.unit);
+                btn.setAttribute('aria-pressed', String(btn.dataset.unit === current.unit));
             }
         });
     });
 
     dom.settingsClose.addEventListener('click', () => {
         dom.settingsModal.classList.add('hidden');
+        $('#reset-confirmation').hidden = true;
     });
 
     dom.stButtons.forEach(btn => {
@@ -765,29 +803,53 @@
             }
             if (btn.dataset.unit) {
                 current.unit = btn.dataset.unit;
-                // Currently only visual saving, can be hooked to OSRM later
+                // Route responses stay in meters; format them using this preference.
             }
             saveSettings(current);
+            if (S.allRouteData[S.mode]) renderActiveState(false);
 
             // Re-render active state visually
             const siblings = btn.parentElement.querySelectorAll('.st-btn');
-            siblings.forEach(s => s.classList.remove('active'));
+            siblings.forEach(s => { s.classList.remove('active'); s.setAttribute('aria-pressed', 'false'); });
             btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
         });
     });
 
+    let resetBackup;
+    const refreshVisitProgress = () => {
+        S.ecoMarkers.forEach(refreshChipIcon);
+        updateEcoScore(); renderStreak(); renderDailyChallenge(); updateProgressStrip(); updateInfoVisitedBtn();
+    };
     dom.stResetData.addEventListener('click', () => {
-        if (confirm("Are you sure? This will wipe your visited spots, streaks, and challenges.")) {
-            localStorage.removeItem(VISITED_KEY);
-            localStorage.removeItem(STREAK_KEY);
-            // Removes all Challenge keys
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key.startsWith('vibemap_ch_')) localStorage.removeItem(key);
-            }
-            alert("Data reset successfully.");
-            location.reload();
+        $('#reset-confirmation').hidden = false;
+        $('#reset-cancel').focus();
+    });
+    $('#reset-cancel').addEventListener('click', () => {
+        $('#reset-confirmation').hidden = true;
+        dom.stResetData.focus();
+    });
+    $('#reset-confirm').addEventListener('click', () => {
+        resetBackup = new Map();
+        for (const key of Object.keys(localStorage)) {
+            if (key === VISITED_KEY || key === STREAK_KEY || key.startsWith('vibemap_ch_')) resetBackup.set(key, localStorage.getItem(key));
         }
+        resetBackup.forEach((value, key) => localStorage.removeItem(key));
+        $('#reset-confirmation').hidden = true;
+        $('#reset-undo').hidden = false;
+        dom.stResetData.disabled = true;
+        $('#reset-undo').focus();
+        refreshVisitProgress();
+        toast('Visit progress reset. You can undo this while this page stays open.', 'info');
+    });
+    $('#reset-undo').addEventListener('click', () => {
+        resetBackup?.forEach((value, key) => localStorage.setItem(key, value));
+        resetBackup = null;
+        $('#reset-undo').hidden = true;
+        dom.stResetData.disabled = false;
+        refreshVisitProgress();
+        dom.stResetData.focus();
+        toast('Visit progress restored.', 'success');
     });
 
     // ── Directions Panel ───────────────────────────────
@@ -796,6 +858,7 @@
     dom.dirBack.addEventListener('click', () => closeDirections());
 
     function openDirections() {
+        recordView('directions');
         S.dirOpen = true;
         dom.dirPanel.inert = false;
         document.body.classList.add('planning-route');
@@ -817,6 +880,7 @@
     });
 
     function closeDirections() {
+        recordView('map');
         S.dirOpen = false;
         dom.dirPanel.inert = true;
         document.body.classList.remove('planning-route');
@@ -825,6 +889,7 @@
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.remove('strip-hidden');
         clearRoute();
+        dom.directionsBtn.focus({ preventScroll: true });
     }
 
     // ── Set origin / dest ──────────────────────────────
@@ -914,10 +979,17 @@
         tab.addEventListener('click', () => {
             S.mode = tab.dataset.mode;
             S.activeRouteIdx = 0; // reset to first route when changing mode
-            dom.modeTabs.forEach(t => t.classList.remove('active'));
+            dom.modeTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-pressed', 'false'); });
             tab.classList.add('active');
+            tab.setAttribute('aria-pressed', 'true');
             if (S.allRouteData[S.mode]) renderActiveState(true);
-            else { clearMapRoutes(); dom.routeSummary.classList.add('hidden'); dom.dirBottom.classList.add('hidden'); dom.stepsList.innerHTML = ''; dom.alternativesList.classList.remove('hidden'); dom.alternativesList.textContent = 'No route available for this mode. Choose another mode or change the endpoints.'; }
+            else {
+                clearMapRoutes(); dom.routeSummary.classList.add('hidden'); dom.dirBottom.classList.add('hidden'); dom.stepsList.innerHTML = '';
+                dom.alternativesList.classList.remove('hidden');
+                dom.alternativesList.textContent = !S.origin || !S.dest
+                    ? 'Choose a starting point and destination to compare routes.'
+                    : 'No route available for this mode. Choose another mode or change the endpoints.';
+            }
         });
     });
 
@@ -1205,6 +1277,7 @@
 
     function stopNavigation() {
         NAV.generation++;
+        document.body.classList.remove('navigation-active');
         if (NAV.watchId != null) navigator.geolocation.clearWatch(NAV.watchId);
         clearTimeout(NAV.rerouteTimer);
         if (NAV.linePassed) { map.removeLayer(NAV.linePassed); NAV.linePassed = null; }
@@ -1248,6 +1321,7 @@
         NAV.offRouteReadings = 0;
         NAV.generation++;
         NAV.active = true;
+        document.body.classList.add('navigation-active');
 
         // Remove old static route lines
         clearMapRoutes();
@@ -1476,11 +1550,15 @@
     // ── Layers ─────────────────────────────────────────
     dom.layersBtn.addEventListener('click', () => {
         S.layersOpen = !S.layersOpen;
+        dom.layersPanel.inert = !S.layersOpen;
+        dom.layersBtn.setAttribute('aria-expanded', String(S.layersOpen));
         dom.layersPanel.classList.toggle('hidden', !S.layersOpen);
         dom.layersBtn.classList.toggle('active', S.layersOpen);
     });
     dom.layersClose.addEventListener('click', () => {
         S.layersOpen = false;
+        dom.layersPanel.inert = true;
+        dom.layersBtn.setAttribute('aria-expanded', 'false');
         dom.layersPanel.classList.add('hidden');
         dom.layersBtn.classList.remove('active');
     });
@@ -1505,7 +1583,10 @@
     dom.menuBtn.addEventListener('click', () => {
         dom.menuBtn.classList.remove('has-notification');
         S.sidebarOpen = true;
+        dom.menuBtn.setAttribute('aria-expanded', 'true');
+        $('#site-menu-btn').setAttribute('aria-expanded', 'true');
         dom.sidebarMenu.classList.remove('hidden');
+        dom.sidebarClose.focus();
         dom.sidebarOverlay.classList.remove('hidden');
         const strip = document.getElementById('progress-strip');
         if (strip) strip.classList.add('strip-hidden');
@@ -1515,6 +1596,9 @@
 
     dom.sidebarClose.addEventListener('click', () => {
         S.sidebarOpen = false;
+        dom.menuBtn.setAttribute('aria-expanded', 'false');
+        $('#site-menu-btn').setAttribute('aria-expanded', 'false');
+        (S.dirOpen ? $('#site-menu-btn') : dom.menuBtn).focus();
         dom.sidebarMenu.classList.add('hidden');
         dom.sidebarOverlay.classList.add('hidden');
         const strip = document.getElementById('progress-strip');
@@ -1524,186 +1608,7 @@
     dom.sidebarOverlay.addEventListener('click', () => {
         dom.sidebarClose.click();
     });
-
-    // ── Eco-Memory Game Logic ───────────────────────
-    let gameInterval;
-    let gamePhase = 'none'; // 'study', 'countdown', 'challenge'
-    let gameScore = 0;
-    let foundSpots = []; // IDs of spots correctly identified
-    let challengeSpots = []; // The 5 random spots for this game
-
-    const startEcoGame = () => {
-        gamePhase = 'study';
-        gameScore = 0;
-        foundSpots = [];
-
-        // Pick 5 random locations
-        challengeSpots = [...SUSTAINABLE_LOCATIONS]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 5);
-
-        dom.gameOverlay.classList.remove('hidden');
-        dom.gameDashboard.classList.remove('hidden');
-        dom.gameSetup.classList.remove('hidden');
-        dom.gameCountdownScreen.classList.add('hidden');
-        dom.resultScreen.classList.add('hidden');
-
-        // Ensure only selected 5 markers are visible for studying
-        S.ecoGameActive = true;
-        updateEcoMarkers(); // Hide all normal ones
-
-        challengeSpots.forEach(loc => {
-            const entry = S.ecoMarkers.find(e => e.loc.id === loc.id);
-            if (entry && entry.marker) entry.marker.addTo(map);
-        });
-
-        dom.startGameBtn.onclick = () => {
-            dom.gameSetup.classList.add('hidden');
-            startTimer(300, 'Memorize!', () => startCountdown());
-        };
-
-        dom.skipPhaseBtn.onclick = () => {
-            clearInterval(gameInterval);
-            if (gamePhase === 'study') startCountdown();
-            else if (gamePhase === 'challenge') endGame();
-        };
-    };
-
-    const startTimer = (seconds, label, onEnd) => {
-        clearInterval(gameInterval);
-        let timeLeft = seconds;
-        dom.gameTimerLabel.textContent = label;
-
-        const updateClock = () => {
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
-            dom.gameTimerClock.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        };
-
-        updateClock();
-        gameInterval = setInterval(() => {
-            timeLeft--;
-            updateClock();
-            if (timeLeft <= 0) {
-                clearInterval(gameInterval);
-                onEnd();
-            }
-        }, 1000);
-    };
-
-    const startCountdown = () => {
-        gamePhase = 'countdown';
-        dom.gameOverlay.classList.remove('hidden');
-        dom.gameCountdownScreen.classList.remove('hidden');
-
-        // Hide ALL markers for challenge
-        S.ecoGameActive = true;
-        updateEcoMarkers();
-
-        let count = 3;
-        dom.countdownNum.textContent = count;
-
-        const countInt = setInterval(() => {
-            count--;
-            if (count > 0) {
-                dom.countdownNum.textContent = count;
-            } else {
-                clearInterval(countInt);
-                startChallenge();
-            }
-        }, 1000);
-    };
-
-    const startChallenge = () => {
-        gamePhase = 'challenge';
-        dom.gameOverlay.classList.add('hidden');
-        dom.gameCountdownScreen.classList.add('hidden');
-        dom.gameDashboard.classList.remove('hidden');
-
-        toast('🚀 GO! Find the 5 random spots you studied.', 'info');
-        startTimer(900, 'Challenge', () => endGame());
-
-        // Enable map click for markers
-        map.on('click', handleMapGameClick);
-    };
-
-    const handleMapGameClick = (e) => {
-        if (gamePhase !== 'challenge') return;
-
-        const { lat, lng } = e.latlng;
-
-        // Only check against challengeSpots
-        let closest = null;
-        let minDist = 0.0015;
-
-        challengeSpots.forEach(loc => {
-            if (foundSpots.includes(loc.id)) return;
-            const d = Math.sqrt(Math.pow(loc.lat - lat, 2) + Math.pow(loc.lng - lng, 2));
-            if (d < minDist) {
-                minDist = d;
-                closest = loc;
-            }
-        });
-
-        if (closest) {
-            const nameInput = prompt(`You found a spot! What is its name?\n(Hint: It's a ${CATEGORIES[closest.category].label})`);
-            if (nameInput && nameInput.toLowerCase().trim() === closest.name.toLowerCase().trim()) {
-                gameScore++;
-                foundSpots.push(closest.id);
-                // Reveal the marker manually for the game
-                const entry = S.ecoMarkers.find(e => e.loc.id === closest.id);
-                if (entry && entry.marker) entry.marker.addTo(map);
-                toast(`✅ Correct! You remembered ${closest.name}`, 'success');
-                if (gameScore === 5) endGame();
-            } else {
-                toast(`❌ Not quite! Try again.`, 'error');
-            }
-        } else {
-            toast(`📍 Nothing there... think harder!`, 'warning');
-        }
-    };
-
-    const endGame = () => {
-        gamePhase = 'none';
-        clearInterval(gameInterval);
-        map.off('click', handleMapGameClick);
-
-        dom.gameOverlay.classList.remove('hidden');
-        dom.resultScreen.classList.remove('hidden');
-        dom.gameDashboard.classList.add('hidden');
-
-        dom.finalScore.textContent = gameScore;
-        dom.totalSpots.textContent = 5;
-
-        if (gameScore >= 3) {
-            dom.finalScore.style.color = 'var(--accent)';
-            updateEcoScore(gameScore * 20); // Big reward
-
-            // BIG CELEBRATION
-            if (typeof confetti === 'function') {
-                const duration = 3 * 1000;
-                const end = Date.now() + duration;
-                (function frame() {
-                    confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#10b981', '#ffffff'] });
-                    confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#10b981', '#ffffff'] });
-                    if (Date.now() < end) requestAnimationFrame(frame);
-                }());
-            }
-
-            dom.finishMessage.textContent = "Great memory! You've mastered these sustainable spots.";
-        } else {
-            dom.finalScore.style.color = 'var(--red)';
-            dom.finishMessage.textContent = "Don't worry, exploring more will help you remember!";
-        }
-
-        dom.collectRewardBtn.onclick = () => {
-            dom.gameOverlay.classList.add('hidden');
-            S.ecoGameActive = false;
-            updateEcoMarkers();
-            dom.onboardingScreen.classList.add('hidden');
-            localStorage.setItem('vibemap_onboarded', 'true');
-        };
-    };
+    $('#site-menu-btn').addEventListener('click', () => dom.menuBtn.click());
 
     // Landing Page Navigation
     if (dom.startExploringBtn) {
@@ -1713,6 +1618,10 @@
     }
 
     function openGuideMap(category) {
+        recordView('map');
+        dom.landingPage.inert = false;
+        dom.lessonPage.classList.add('hidden');
+        if (S.sidebarOpen) dom.sidebarClose.click();
         dom.landingPage.classList.add('hidden');
         setMapAccessibility(true);
         if (category) {
@@ -1731,7 +1640,7 @@
 
     function setMapAccessibility(visible) {
         document.body.classList.toggle('guide-open', !visible);
-        document.querySelectorAll('#map, #map-categories, #map-result-count, #search-bar, #fab-stack, #zoom-controls, #suggest-btn').forEach(el => el.inert = !visible);
+        document.querySelectorAll('#map, #map-categories, #map-result-count, #search-bar, #fab-stack, #zoom-controls, #suggest-btn, #map-site-nav, #info-card').forEach(el => el.inert = !visible);
     }
 
     function initLocalGuide() {
@@ -1782,14 +1691,16 @@
     // ── Keyboard Shortcuts ─────────────────────────────
     document.addEventListener('keydown', e => {
         if (!dom.landingPage.classList.contains('hidden')) return;
-        if (e.target.tagName === 'INPUT') {
+        if (e.target.closest('input, textarea, select, [contenteditable]')) {
             if (e.key === 'Escape') { e.target.blur(); dom.searchResults.classList.remove('visible'); }
             return;
         }
+        if (!dom.lessonPage.classList.contains('hidden') || document.querySelector('.modal-overlay:not(.hidden), #game-modal:not(.hidden), #sidebar-menu:not(.hidden)') || S.ecoGameActive || NAV.active) return;
         if (e.key === '/') { e.preventDefault(); dom.searchInput.focus(); }
         if (e.key === 'n' || e.key === 'N') { S.dirOpen ? closeDirections() : openDirections(); }
         if (e.key === 'l' || e.key === 'L') dom.locateBtn.click();
         if (e.key === 'Escape') { if (S.dirOpen) closeDirections(); dom.infoCard.classList.add('hidden'); }
+        if (e.key === 'Escape' && S.layersOpen) dom.layersClose.click();
         if (e.key === '+' || e.key === '=') map.zoomIn();
         if (e.key === '-') map.zoomOut();
     });
@@ -1802,6 +1713,8 @@
         }
         if (!e.target.closest('#layers-panel') && !e.target.closest('#layers-btn')) {
             S.layersOpen = false;
+            dom.layersPanel.inert = true;
+            dom.layersBtn.setAttribute('aria-expanded', 'false');
             dom.layersPanel.classList.add('hidden');
             dom.layersBtn.classList.remove('active');
         }
@@ -1824,10 +1737,10 @@
 
     function initEcoData() {
         dom.categoriesList.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
-            return `<div class="category-item" data-cat="${key}">
+            return `<button type="button" class="category-item" aria-pressed="false" data-cat="${key}">
                 <div class="category-icon" style="background: ${cat.color}"><i class="ph-bold ${cat.icon}"></i></div>
                 <div class="category-label">${cat.label}</div>
-            </div>`;
+            </button>`;
         }).join('');
 
         dom.categoriesList.querySelectorAll('.category-item').forEach(item => {
@@ -1862,23 +1775,12 @@
                 })
             });
 
-            const popupHtml = `
-                <div class="custom-popup">
-                    <div class="popup-meta" style="color: ${catInfo.color};"><i class="ph-bold ${catInfo.icon}"></i> ${catInfo.label}</div>
-                    <div class="popup-title">${loc.name}</div>
-                    <div class="popup-desc">${loc.description}</div>
-                </div>
-            `;
-            marker.bindPopup(popupHtml, {
-                closeButton: true,
-                offset: [0, -10],
-                className: 'flawless-popup'
-            });
-
             marker.on('click', () => {
                 map.flyTo([loc.lat, loc.lng], 16, { duration: 1.0 });
                 dom.infoTitle.textContent = loc.name;
                 dom.infoSub.textContent = catInfo.label + ' · ' + loc.address;
+                $('#info-description').textContent = loc.description;
+                $('#info-description').hidden = false;
 
                 // Show SDG Badges
                 if (loc.sdg && loc.sdg.length > 0) {
@@ -1899,6 +1801,7 @@
                 dom.infoCard.classList.remove('hidden');
                 if (dom.featuredCarousel) dom.featuredCarousel.classList.add('hidden');
             });
+            marker.on('add', () => marker.getElement()?.setAttribute('aria-label', loc.name));
 
             return { loc, marker };
         });
@@ -1925,7 +1828,7 @@
         dom.myPlacesList.innerHTML = savedLocs.map(loc => {
             const cat = CATEGORIES[loc.category];
             return `
-                <div class="saved-place-item" data-id="${loc.id}">
+                <button type="button" class="saved-place-item" data-id="${loc.id}">
                     <div class="saved-place-info">
                         <div class="category-icon" style="background: ${cat.color}"><i class="ph-bold ${cat.icon}"></i></div>
                         <div class="saved-place-meta">
@@ -1933,7 +1836,7 @@
                             <div class="saved-place-cat">${cat.label}</div>
                         </div>
                     </div>
-                </div>
+                </button>
             `;
         }).join('');
 
@@ -1952,7 +1855,7 @@
             const active = button.dataset.mapCategory === 'all' ? showAll : S.activeCategories.has(button.dataset.mapCategory);
             button.setAttribute('aria-pressed', String(active));
         });
-        dom.categoriesList.querySelectorAll('.category-item').forEach(item => item.classList.toggle('active', S.activeCategories.has(item.dataset.cat)));
+        dom.categoriesList.querySelectorAll('.category-item').forEach(item => { const active = S.activeCategories.has(item.dataset.cat); item.classList.toggle('active', active); item.setAttribute('aria-pressed', String(active)); });
         const count = SUSTAINABLE_LOCATIONS.filter(loc => showAll || S.activeCategories.has(loc.category)).length;
         document.getElementById('map-result-count').textContent = `${count} ${count === 1 ? 'place' : 'places'} in the guide`;
         S.ecoMarkers.forEach(({ loc, marker }) => {
@@ -1974,160 +1877,6 @@
         if (S.sidebarOpen) dom.sidebarClose.click();
     });
 
-    function initFeaturedCarousel() {
-        if (!dom.featuredCarousel) return;
-
-        const unvisited = SUSTAINABLE_LOCATIONS.filter(loc => !isVisited(loc.id));
-        const pool = unvisited.length >= 5 ? unvisited : SUSTAINABLE_LOCATIONS;
-        // Pick 8 random spots — enough for a continuous loop feel
-        const shuffled = [...pool].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 8);
-
-        // Build inner track
-        const track = document.createElement('div');
-        track.id = 'fc-track';
-
-        function buildCard(loc) {
-            const cat = CATEGORIES[loc.category];
-            const card = document.createElement('div');
-            card.className = 'featured-card';
-            const _isSaved = isSaved(loc.id);
-            card.innerHTML = `
-                <div class="fc-accent" style="background: ${cat.color}; box-shadow: 0 0 12px ${cat.color}66;"></div>
-                <div class="fc-body">
-                    <div class="fc-header">
-                        <div class="fc-icon" style="background: ${cat.color}22; color: ${cat.color};">
-                            <i class="ph-bold ${cat.icon}"></i>
-                        </div>
-                        <div class="fc-meta">
-                            <h4 class="fc-title">${loc.name}</h4>
-                            <p class="fc-category" style="color: ${cat.color};">${cat.label}</p>
-                        </div>
-                        <div class="fc-actions" style="margin-left: auto;">
-                            <button class="icon-btn fc-save-btn" data-id="${loc.id}" style="color: ${_isSaved ? '#ef4444' : 'var(--text-secondary)'}; z-index: 10;">
-                                <i class="${_isSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="fc-desc">${loc.description}</p>
-                    <div class="fc-cta"><i class="ph-bold ph-arrow-right"></i> Explore on map</div>
-                </div>
-            `;
-
-            // Handle Save Button click inside card
-            const saveBtn = card.querySelector('.fc-save-btn');
-            saveBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // prevent card click
-                const nowSaved = toggleSaved(loc.id);
-                // Update this button specifically
-                saveBtn.style.color = nowSaved ? '#ef4444' : 'var(--text-secondary)';
-                saveBtn.innerHTML = `<i class="${nowSaved ? 'ph-fill ph-heart' : 'ph ph-heart'}"></i>`;
-
-                // Update map marker if exists
-                const entry = S.ecoMarkers.find(e => e.loc.id === loc.id);
-                if (entry) refreshChipIcon(entry);
-
-                // Update My Places
-                if (typeof renderMyPlaces === 'function') renderMyPlaces();
-
-                // If info card is open for this place, update its button too
-                if (infoId === loc.id) updateInfoSavedBtn();
-
-                toast(nowSaved ? '❤ Added to My Places' : 'Removed from My Places', 'info');
-            });
-
-            card.addEventListener('click', () => {
-                const markerObj = S.ecoMarkers.find(m => m.loc.id === loc.id);
-                if (markerObj) markerObj.marker.fire('click');
-            });
-            return card;
-        }
-
-        selected.forEach(loc => track.appendChild(buildCard(loc)));
-        // Duplicate for seamless loop
-        selected.forEach(loc => track.appendChild(buildCard(loc)));
-
-        dom.featuredCarousel.innerHTML = '';
-        dom.featuredCarousel.appendChild(dom.fcClose);
-        dom.featuredCarousel.appendChild(dom.fcPause);
-        dom.featuredCarousel.appendChild(dom.fcPrev);
-        dom.featuredCarousel.appendChild(dom.fcNext);
-        dom.featuredCarousel.appendChild(track);
-
-        // ── Controls ─────────────────────────────────────
-        let paused = false;
-        let manualPaused = false;
-        let halfWidth = 0;
-        let offset = 0;
-
-        const updatePauseBtnIcon = () => {
-            dom.fcPause.innerHTML = manualPaused ? '<i class="ph-bold ph-play"></i>' : '<i class="ph-bold ph-pause"></i>';
-        };
-
-        dom.fcPause.addEventListener('click', (e) => {
-            e.stopPropagation();
-            manualPaused = !manualPaused;
-            updatePauseBtnIcon();
-        });
-
-        dom.fcClose.addEventListener('click', (e) => {
-            e.stopPropagation();
-            dom.featuredCarousel.classList.add('hidden');
-            dom.fcShow.classList.add('hidden'); // Hide the show button too if carousel is closed
-        });
-
-        dom.fcShow.addEventListener('click', () => {
-            dom.featuredCarousel.classList.remove('hidden');
-            dom.fcShow.classList.add('hidden');
-            // Auto-resume scrolling when brought back
-            manualPaused = false;
-            updatePauseBtnIcon();
-        });
-
-        const manualShift = (dir) => {
-            manualPaused = true;
-            updatePauseBtnIcon();
-            if (halfWidth === 0) halfWidth = track.scrollWidth / 2;
-            offset += dir * 260; // card width + gap
-            if (offset < 0) offset += halfWidth;
-            if (offset >= halfWidth) offset -= halfWidth;
-            track.style.transform = `translateX(-${offset}px)`;
-        };
-
-        dom.fcPrev.addEventListener('click', (e) => { e.stopPropagation(); manualShift(-1); });
-        dom.fcNext.addEventListener('click', (e) => { e.stopPropagation(); manualShift(1); });
-
-        // Hover/Touch logic
-        dom.featuredCarousel.addEventListener('mouseenter', () => paused = true);
-        dom.featuredCarousel.addEventListener('mouseleave', () => paused = false);
-        dom.featuredCarousel.addEventListener('touchstart', () => paused = true, { passive: true });
-        dom.featuredCarousel.addEventListener('touchend', () => setTimeout(() => paused = false, 2000));
-
-        // ── Slow auto-scroll via RAF ──────────────────────
-        const SPEED = 0.4; // px per frame
-
-        function scroll() {
-            if (!paused && !manualPaused && !dom.featuredCarousel.classList.contains('hidden')) {
-                offset += SPEED;
-                // Seamless loop: reset when we've scrolled through the first half clone
-                if (halfWidth === 0) halfWidth = track.scrollWidth / 2;
-                if (offset >= halfWidth) offset = 0;
-                track.style.transform = `translateX(-${offset}px)`;
-            }
-            requestAnimationFrame(scroll);
-        }
-
-        // Show after onboarding then start scrolling
-        setTimeout(() => {
-            // Only reveal if the user hasn't already opened the info card
-            if (dom.infoCard.classList.contains('hidden')) {
-                dom.featuredCarousel.classList.remove('hidden');
-            }
-            requestAnimationFrame(scroll);
-        }, 4000);
-    }
-
-    // ── Deep Linking ───────────────────────────────────
     function parseUrlParams() {
         const params = new URLSearchParams(window.location.search);
         if (params.get('map') === '1') openGuideMap();
@@ -2141,6 +1890,7 @@
             if (loc) {
                 // Delay to ensure loading screen hide and app init
                 setTimeout(() => {
+                    if (view !== 'map' || dom.landingPage.classList.contains('hidden') === false) return;
                     // Find if the marker is already there (it should be)
                     const markerObj = S.ecoMarkers.find(e => e.loc.id === locId);
                     if (markerObj) {
@@ -2154,13 +1904,13 @@
                         const mo = S.ecoMarkers.find(e => e.loc.id === locId);
                         if (mo) mo.marker.fire('click');
                     }
-                }, 2000);
+                }, 0);
             }
         } else if (lat && lng) {
             openGuideMap();
             const pLat = parseFloat(lat);
             const pLng = parseFloat(lng);
-            if (!isNaN(pLat) && !isNaN(pLng)) {
+            if (Number.isFinite(pLat) && Number.isFinite(pLng) && Math.abs(pLat) <= 90 && Math.abs(pLng) <= 180) {
                 setTimeout(async () => {
                     showLocation(pLat, pLng, 'Loading location...', '');
                     const name = await reverseGeocode(pLat, pLng);
@@ -2168,7 +1918,7 @@
                     dom.infoTitle.textContent = shortName;
                     dom.infoSub.textContent = name;
                     if (infoMarker) infoName = shortName;
-                }, 2000);
+                }, 0);
             }
         }
 
@@ -2335,6 +2085,8 @@
 
         // Unified Function to show the main landing guide section
         const showMainGuide = () => {
+            if (S.ecoGameActive || !dom.gameModal.classList.contains('hidden')) dom.gameExitBtn.click();
+            dom.landingPage.inert = false;
             // 1. Close all active modals/overlays
             if (dom.eduModal) dom.eduModal.classList.add('hidden');
             if (dom.lessonPage) dom.lessonPage.classList.add('hidden');
@@ -2362,20 +2114,22 @@
             }
         };
 
+        showLearningGuide = () => { showMainGuide(); recordView('learn'); };
+
         // Scroll to section instead of opening modal from landing page button
         if (dom.lpEduScrollBtn) {
-            dom.lpEduScrollBtn.addEventListener('click', showMainGuide);
+            dom.lpEduScrollBtn.addEventListener('click', showLearningGuide);
         }
 
         // Return to Guide from the map
         if (dom.mapEduBtn) {
-            dom.mapEduBtn.addEventListener('click', showMainGuide);
+            dom.mapEduBtn.addEventListener('click', showLearningGuide);
         }
 
         if (dom.landingEduBtn) dom.landingEduBtn.addEventListener('click', show);
         if (dom.sidebarEduBtn) dom.sidebarEduBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            showMainGuide();
+            showLearningGuide();
             // Close sidebar if open
             if (S.sidebarOpen) dom.sidebarClose.click();
         });
@@ -2550,11 +2304,11 @@
                 const data = SDG_LESSONS[i];
                 if (!data) continue;
                 html += `
-                    <div class="sdg-card goal-${i}" data-goal="${i}">
+                    <button type="button" class="sdg-card goal-${i}" data-goal="${i}">
                         <div class="sdg-num">${i}</div>
                         <h4>${data.title}</h4>
                         <p>${data.fact}</p>
-                    </div>
+                    </button>
                 `;
             }
             dom.sdgTrack.innerHTML = html;
@@ -2572,10 +2326,12 @@
             returnToModal = !dom.eduModal.classList.contains('hidden');
             returnToLanding = !dom.landingPage.classList.contains('hidden');
 
+            recordView('goal-' + num);
             dom.lessonPage.style.setProperty('--hero-color', `var(--goal-${num})`);
             dom.lpGoalIcon.src = `https://open-sdg.github.io/sdg-translations/assets/img/goals/en/${num}.png`;
             dom.lpGoalNum.textContent = 'SDG Goal ' + num;
             dom.lpGoalTitle.textContent = data.title;
+            $('#lp-un-source').href = `https://sdgs.un.org/goals/goal${num}`;
             dom.lpGoalRole.textContent = data.role;
             dom.lpGoalFact.textContent = data.fact;
             dom.lpGoalAction.textContent = data.action;
@@ -2599,6 +2355,7 @@
             setMapAccessibility(false);
             dom.lessonPage.classList.remove('hidden');
             dom.lessonPage.scrollTo(0, 0);
+            dom.lessonPage.querySelector('.lesson-page-container').scrollTo(0, 0);
             dom.lessonBack.focus({ preventScroll: true });
 
             // Set current goal for completion
@@ -2620,12 +2377,14 @@
         showSdgLesson = showSdg;
 
         const hideSdgPage = () => {
+            recordView(returnToLanding ? 'learn' : 'map');
             dom.lessonPage.classList.add('hidden');
             dom.landingPage.inert = false;
             if (returnToLanding) dom.landingPage.classList.remove('hidden');
             if (returnToModal) dom.eduModal.classList.remove('hidden');
             setMapAccessibility(dom.landingPage.classList.contains('hidden'));
-            returnFocus?.focus({ preventScroll: true });
+            const focus = returnFocus?.getClientRects().length ? returnFocus : returnToLanding ? dom.lpEduScrollBtn : dom.menuBtn;
+            focus?.focus({ preventScroll: true });
         };
         dom.lessonBack.addEventListener('click', hideSdgPage);
         dom.lessonPage.addEventListener('keydown', event => {
@@ -2662,7 +2421,8 @@
         let timeLeft = 0;
         let gameMarkers = [];
         let gameActive = false;
-        let recallData = []; 
+        let recallData = [];
+        let gamePlaces = [];
 
         const updateClock = (s) => {
             const m = Math.floor(s / 60), sec = s % 60;
@@ -2686,9 +2446,12 @@
         const endChallenge = () => {
             stopGameTimer();
             gameActive = false;
+            S.ecoGameActive = false;
+            updateEcoMarkers();
             document.body.classList.remove('game-active');
             dom.gameTimerBar.classList.remove('active');
             dom.gameRecallPanel.classList.remove('active');
+            dom.gameRecallPanel.classList.add('hidden');
             
             // Calculate Score
             let score = 0;
@@ -2696,8 +2459,7 @@
             const userAnswers = Array.from(inputs).map(i => i.value.trim().toLowerCase()).filter(v => v);
             
             // Get all valid location names
-            const validNames = SUSTAINABLE_LOCATIONS
-                .filter(l => !l.name.toLowerCase().includes('carlisle'))
+            const validNames = gamePlaces
                 .map(l => l.name.toLowerCase());
 
             // A name is correct if it matches any valid name exactly (basic)
@@ -2710,7 +2472,7 @@
                 }
             });
 
-            const total = SUSTAINABLE_LOCATIONS.filter(l => !l.name.toLowerCase().includes('carlisle')).length;
+            const total = gamePlaces.length;
             dom.gameFinalScore.textContent = `${score} / ${total}`;
             
             if (score === total) dom.gameFeedback.textContent = "Unbelievable! Perfect score. You are a sustainability master! 🏆";
@@ -2730,8 +2492,9 @@
 
         const startRecallPhase = () => {
             stopGameTimer();
+            $('#game-ready-btn').hidden = true;
             dom.gamePhaseLabel.textContent = 'Recall Phase';
-            timeLeft = 15 * 60; // 15 minutes
+            timeLeft = 5 * 60; // 15 minutes
             updateClock(timeLeft);
             
             // Hide Markers
@@ -2739,11 +2502,11 @@
 
             // Setup Recall Panel
             dom.gameRecallInputs.innerHTML = '';
-            const total = SUSTAINABLE_LOCATIONS.filter(l => !l.name.toLowerCase().includes('carlisle')).length;
+            const total = gamePlaces.length;
             for (let i = 0; i < total; i++) {
                 const group = document.createElement('div');
                 group.className = 'recall-input-group';
-                group.innerHTML = `<span>${i + 1}.</span><input type="text" placeholder="Location name...">`;
+                group.innerHTML = `<label for="recall-${i}">Place ${i + 1}</label><input id="recall-${i}" type="text" placeholder="Location name...">`;
                 dom.gameRecallInputs.appendChild(group);
             }
             
@@ -2758,6 +2521,7 @@
         };
 
         const startMemorizationPhase = () => {
+            $('#game-ready-btn').hidden = false;
             gameActive = true;
             S.ecoGameActive = true;
             updateEcoMarkers();
@@ -2766,13 +2530,14 @@
             dom.gameTimerBar.classList.add('active');
             dom.gamePhaseLabel.textContent = 'Memorize!';
             
-            timeLeft = 5 * 60; // 5 minutes
+            timeLeft = 90; // A short study period for five places
             updateClock(timeLeft);
 
             // Show ALL markers
             clearChallengeMarkers();
-            SUSTAINABLE_LOCATIONS.forEach(loc => {
-                // Filter out Carlisle if any
+            gamePlaces = [...SUSTAINABLE_LOCATIONS].sort(() => Math.random() - .5).slice(0, 5);
+            gamePlaces.forEach(loc => {
+                // Show the selected places
                 if (loc.name.toLowerCase().includes('carlisle')) return;
 
                 const m = L.marker([loc.lat, loc.lng], {
@@ -2782,8 +2547,7 @@
                 gameMarkers.push(m);
             });
 
-            // Focus on Luzern
-            map.flyTo([47.0500, 8.3090], 14, { duration: 2 });
+            map.fitBounds(gamePlaces.map(loc => [loc.lat, loc.lng]), { padding: [70, 100], maxZoom: 14 });
 
             gameTimer = setInterval(() => {
                 timeLeft--;
@@ -2802,12 +2566,16 @@
         });
 
         dom.gameStartBtn.addEventListener('click', startMemorizationPhase);
+        $('#game-ready-btn').addEventListener('click', startRecallPhase);
+        $('#game-cancel-btn').addEventListener('click', () => dom.gameExitBtn.click());
+        $('#game-study-exit').addEventListener('click', () => dom.gameExitBtn.click());
         dom.gameSubmitBtn.addEventListener('click', endChallenge);
         dom.gameReplayBtn.addEventListener('click', () => {
             showPhasePopup('intro');
         });
         dom.gameExitBtn.addEventListener('click', () => {
             stopGameTimer();
+            gameActive = false;
             clearChallengeMarkers();
             S.ecoGameActive = false;
             updateEcoMarkers();
@@ -2817,6 +2585,7 @@
             dom.gameModal.classList.add('hidden');
             // Show landing page again? No, stay on map but exiting game mode
             document.body.classList.remove('game-active');
+            dom.menuBtn.focus({ preventScroll: true });
         });
     };
 
@@ -2832,7 +2601,98 @@
     updateProgressStrip();
 
     initEcoGame(); // Call new game init
-    parseUrlParams();
+    function showView(next) {
+        if (NAV.active) stopNavigation();
+        if (S.ecoGameActive || !dom.gameModal.classList.contains('hidden')) dom.gameExitBtn.click();
+        if (S.sidebarOpen) dom.sidebarClose.click();
+        if (S.layersOpen) dom.layersClose.click();
+        document.querySelectorAll('.modal-overlay').forEach(modal => modal.classList.add('hidden'));
+        dom.infoCard.classList.add('hidden');
+        if (next === 'directions' && S.dirOpen) return;
+        if (S.dirOpen) closeDirections();
+        if (next === 'home') {
+            dom.lessonPage.classList.add('hidden');
+            dom.landingPage.inert = false;
+            dom.landingPage.classList.remove('hidden');
+            setMapAccessibility(false);
+            recordView('home');
+            dom.landingPage.scrollTo({ top: 0, behavior: 'instant' });
+            dom.startExploringBtn.focus({ preventScroll: true });
+        } else if (next === 'learn') showLearningGuide();
+        else if (next.startsWith('goal-')) { showLearningGuide(); showSdgLesson(+next.slice(5)); }
+        else { openGuideMap(); if (next === 'directions') openDirections(); }
+    }
+    document.querySelectorAll('[data-site-view]').forEach(button => button.addEventListener('click', () => {
+        const next = button.dataset.siteView;
+        if (next === view) return;
+        restoringView = true;
+        showView(next);
+        restoringView = false;
+        recordView(next);
+    }));
+    window.addEventListener('popstate', () => {
+        const target = GreenNavigation.parse(location.hash);
+        restoringView = true;
+        if (!location.hash && location.search) { showView('map'); parseUrlParams(); }
+        else showView(target.view === 'goal' ? 'goal-' + target.goal : target.view);
+        restoringView = false;
+    });
+    if (location.hash) {
+        const target = GreenNavigation.parse(location.hash);
+        restoringView = true;
+        showView(target.view === 'goal' ? 'goal-' + target.goal : target.view);
+        restoringView = false;
+    } else {
+        restoringView = true;
+        parseUrlParams();
+        restoringView = false;
+        if (!location.search) recordView('home', true);
+    }
+
+    // Dialog lifecycle: hide background controls, keep keyboard focus inside and restore it on close.
+    const dialogs = [...document.querySelectorAll('.modal-overlay, #game-modal, #sidebar-menu')];
+    let activeDialog = null;
+    let previousFocus = null;
+    function syncDialogs() {
+        const next = dialogs.find(dialog => !dialog.classList.contains('hidden'));
+        dialogs.forEach(dialog => dialog.inert = dialog !== next);
+        dom.infoCard.inert = Boolean(next);
+        dom.dirPanel.inert = Boolean(next) || !S.dirOpen;
+        dom.layersPanel.inert = Boolean(next) || !S.layersOpen;
+        dom.lessonPage.inert = Boolean(next);
+        if (next === activeDialog) return;
+        if (next) {
+            previousFocus = document.activeElement;
+            next.setAttribute('role', 'dialog');
+            next.setAttribute('aria-modal', 'true');
+            next.setAttribute('aria-label', next.querySelector('h2')?.textContent || 'Menu');
+            next.querySelector('button, input, a')?.focus();
+        } else if (activeDialog && previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus();
+        activeDialog = next;
+        document.body.classList.toggle('dialog-open', Boolean(next));
+        setMapAccessibility(!next && dom.landingPage.classList.contains('hidden') && dom.lessonPage.classList.contains('hidden'));
+        dom.landingPage.inert = Boolean(next) || !dom.lessonPage.classList.contains('hidden');
+    }
+    const observer = new MutationObserver(syncDialogs);
+    dialogs.forEach(dialog => observer.observe(dialog, { attributes: true, attributeFilter: ['class'] }));
+    const closeDialog = dialog => {
+        const close = dialog.querySelector('[id$="close-btn"], #game-cancel-btn');
+        if (close) close.click();
+        else dialog.classList.add('hidden');
+    };
+    dialogs.forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog && dialog.id !== 'sidebar-menu') closeDialog(dialog); }));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && S.ecoGameActive) { event.preventDefault(); dom.gameExitBtn.click(); return; }
+        if (!activeDialog) return;
+        if (event.key === 'Escape') { event.preventDefault(); closeDialog(activeDialog); }
+        if (event.key === 'Tab') {
+            const controls = [...activeDialog.querySelectorAll('button, a[href], input, textarea, select')].filter(el => !el.disabled && el.getClientRects().length);
+            const first = controls[0], last = controls[controls.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }
+    });
+    syncDialogs();
 
     // ── PWA: Register Service Worker ──────────────────
     if ('serviceWorker' in navigator) {

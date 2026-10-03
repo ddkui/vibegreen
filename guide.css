@@ -178,8 +178,86 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 .lesson-actions .lesson-btn { padding: 10px 14px; border-radius: 3px; color: #fff; background: #245d43; }
 .edu-swisstainable-highlight, .edu-challenge-cta { background: #edf0e7; border-color: #d1d8cd; color: #23382d; box-shadow: none; }
 .edu-swisstainable-highlight h4, .edu-challenge-cta h4, .edu-swisstainable-highlight p, .edu-challenge-cta p { color: #23382d; }
-/* Keep legacy lesson and optional game screens legible on their dark canvas. */
-#lesson-page, #game-modal, #game-overlay, #onboarding-screen { --text-primary: #f0f0f8; --text-secondary: #c9d8ce; --accent-light: #91d9b4; --accent-lighter: #91d9b4; }
+/* Shared navigation and readable learning pages. */
+#map-site-nav { position: fixed; z-index: 1100; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px; background: #fff; border: 1px solid #d1d8cd; border-radius: 6px; box-shadow: 0 3px 14px #23382d15; }
+#map-site-nav button { display: flex; align-items: center; gap: 7px; min-height: 42px; padding: 10px 16px; color: #536259; border-radius: 3px; font: inherit; font-size: 15px; }
+#map-site-nav button i { font-size: 19px; }
+#info-card { bottom: 98px; max-height: calc(100dvh - 280px); overflow-y: auto; }
+#info-card-subtitle { font-family: var(--font); letter-spacing: 0; }
+#info-description { margin: 12px 0; color: #536259; font-size: 15px; line-height: 1.5; }
+[data-site-view][aria-current="page"] { color: #245d43 !important; background: #edf0e7; }
+.guide-open #map-site-nav, .dialog-open #map-site-nav, .game-active #map-site-nav, body[data-view^="goal-"] #map-site-nav { display: none; }
+.navigation-active #map-site-nav { display: none; }
+[hidden], #directions-panel.hidden, #lesson-page.hidden { display: none !important; }
+.page-navigation { display: flex; gap: 24px; font-size: 15px; }
+.page-navigation a { color: #245d43; text-decoration: none; }
+.guide-header nav { flex-wrap: wrap; }
+.guide-header { position: sticky; top: 0; background: #f6f5ef; z-index: 20; }
+.landing-edu-section { scroll-margin-top: 110px; }
+.guide-header [data-site-view] { padding: 6px 9px; border-radius: 3px; }
+.category-item, .saved-place-item, .sidebar-link, .sdg-card { width: 100%; text-align: left; font: inherit; color: inherit; }
+.search-hint { margin: 0; padding: 16px; color: #536259; font-size: 14px; line-height: 1.5; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #245d43; outline-offset: 3px; }
+#lesson-page { background: #f6f5ef; color: #23382d; transition: none; --text-primary: #23382d; --text-secondary: #536259; --accent-light: #245d43; }
+#lesson-page::before, .lp-section::after { display: none; }
+.lesson-page-nav { flex-shrink: 0; min-height: 76px; padding: 15px max(24px, calc((100vw - 1120px) / 2)); background: #f6f5ef; border-bottom: 1px solid #d1d8cd; backdrop-filter: none; }
+.lesson-page-brand { font-size: 13px; letter-spacing: 0; text-transform: none; color: #536259; font-weight: 400; }
+#lesson-page-back { display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: auto; height: auto; min-height: 44px; white-space: nowrap; color: #245d43; padding: 10px 0; border-radius: 0; font-size: 15px; }
+.lesson-page-container { display: block; overflow-y: auto; overflow-x: hidden; width: 100%; max-width: none; margin: 0; padding: 0 max(24px, calc((100vw - 1120px) / 2)); }
+.lp-hero { width: 100%; padding: 42px 0 32px; border: none; background: none; text-align: left; align-items: flex-start; }
+.lp-hero-content { display: flex; flex-direction: row; align-items: center; gap: 28px; }
+#lp-un-source { display: inline-block; margin-top: 14px; font-size: 14px; text-underline-offset: 4px; }
+#lp-goal-icon { width: 110px; height: 110px; margin: 0; border-radius: 0; animation: none; box-shadow: none; }
+#lp-goal-num { background: none; color: #536259; font-weight: 600; padding: 0; font-size: 13px; margin-bottom: 12px; border-radius: 0; }
+#lp-goal-title { color: #23382d; font-family: 'Newsreader', Georgia, serif; font-size: clamp(36px, 4vw, 60px); font-weight: 400; letter-spacing: -.02em; line-height: 1.08; }
+.lp-main { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; width: 100%; padding: 0 0 70px; overflow: visible; scroll-snap-type: none; }
+.lp-section { min-width: 0; max-width: none; width: 100%; height: auto; padding: 26px 0; gap: 15px; border: none; border-top: 1px solid #d1d8cd; border-radius: 0; background: none; box-shadow: none; overflow: visible; }
+.lp-section:hover { transform: none; border-color: #d1d8cd; }
+.lp-section-icon { background: none; color: #245d43; width: 28px; height: 28px; font-size: 25px; border-radius: 0; box-shadow: none; }
+.lp-section h3 { color: #23382d; font-size: 25px; font-weight: 400; font-family: 'Newsreader', Georgia, serif; margin-bottom: 12px; }
+.lp-section p, .lp-fact-text { color: #536259 !important; font-size: 17px !important; line-height: 1.65 !important; font-weight: 400; }
+.lp-targets-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.lp-target-card { padding: 12px 16px; border: none; border-left: 2px solid #b6c9b7; background: #edf0e7; border-radius: 0; box-shadow: none; }
+.lp-target-card h5 { color: #245d43; margin: 0 0 6px; font-size: 13px; }
+.lp-progress-text { background: #edf0e7; border-left: 2px solid #b6c9b7; border-radius: 0; padding: 16px; font-style: normal; }
+.lp-challenges-list li { padding: 9px 0; background: none; border-radius: 0; font-weight: 400; color: #536259; }
+.action-card { background: none; justify-content: flex-start; }
+#lp-complete-btn { padding: 13px 22px; width: auto; border-radius: 3px; background: #245d43; box-shadow: none; font-size: 16px; font-weight: 600; }
+#lp-complete-btn:hover { transform: none; background: #194b34; box-shadow: none; }
+#game-modal { background: #23382d66; --text-primary: #23382d; --text-secondary: #536259; }
+.game-modal-card { position: relative; background: #f6f5ef; border: 1px solid #d1d8cd; border-radius: 6px; box-shadow: 0 12px 50px #23382d20; }
+#game-cancel-btn { position: absolute; right: 12px; top: 12px; color: #245d43; }
+.game-modal-card h2, .game-modal-card h3 { font-family: 'Newsreader', Georgia, serif; font-weight: 400; color: #23382d; }
+.game-modal-card p { color: #536259; }
+#game-timer-bar { display: none; position: fixed; z-index: 1500; top: 20px; left: 50%; width: max-content; max-width: calc(100% - 24px); transform: translateX(-50%); padding: 12px 18px; background: #f6f5ef; color: #23382d; font-weight: 500; font-size: 15px; box-shadow: 0 2px 12px #23382d15; border: 1px solid #d1d8cd; border-radius: 5px; gap: 16px; align-items: center; }
+#game-timer-bar.active { display: flex; transform: translateX(-50%); }
+.game-active #search-bar, .game-active #map-categories, .game-active #map-result-count, .game-active #fab-stack, .game-active #suggest-btn { display: none; }
+#game-timer-bar button { padding: 8px 12px; border: 1px solid #b6c9b7; border-radius: 3px; color: #245d43; font: inherit; }
+#game-countdown { font-variant-numeric: tabular-nums; }
+#game-recall-panel { background: #f6f5ef; color: #23382d; border-color: #d1d8cd; }
+.recall-input-group { display: flex; align-items: center; gap: 12px; }
+.recall-input-group input { min-width: 0; flex: 1; }
+@media (max-width: 700px) {
+    .guide-header { gap: 14px; align-items: center; }
+    .guide-header nav { gap: 4px; justify-content: flex-end; }
+    .guide-header nav a { max-width: 75px; line-height: 1.2; }
+    .guide-header nav [data-site-view="home"] { display: none; }
+    #map-site-nav { left: 0; right: 0; bottom: 0; transform: none; justify-content: space-around; padding: 4px 5px calc(4px + env(safe-area-inset-bottom, 0px)); border-radius: 0; border-width: 1px 0 0; }
+    #map-site-nav button { flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 12px; min-height: 48px; }
+    #info-card { bottom: calc(155px + env(safe-area-inset-bottom, 0px)); }
+    #suggest-btn, #fab-stack { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+    .planning-route #directions-panel { bottom: calc(61px + env(safe-area-inset-bottom, 0px)); height: 56dvh; }
+    .lesson-page-nav { padding: 12px 20px; min-height: 64px; }
+    .lesson-page-brand { max-width: 120px; text-align: right; line-height: 1.3; }
+    .lesson-page-container { padding: 0 20px; }
+    .lp-hero { padding: 28px 0; }
+    .lp-hero-content { gap: 18px; }
+    #lp-goal-icon { width: 82px; height: 82px; }
+    #lp-goal-title { font-size: 36px; }
+    .lp-main { display: block; padding: 0 0 45px; }
+    .lp-section { padding: 22px 0; }
+    #game-timer-bar, #game-timer-bar.active { top: 12px; left: 12px; right: 12px; width: auto; transform: none; flex-wrap: wrap; gap: 8px; padding: 10px; }
+}
 .page-header, .hero, .section, .page-footer { color: #23382d; }
 .hero { background: #edf0e7; }
 .hero h1 { font-family: 'Newsreader', Georgia, serif; font-weight: 400; }
@@ -237,4 +315,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+/* Leave clear space around the mobile navigation and the active place or route. */
+@media (max-width: 700px) {
+    #suggest-btn, #fab-stack { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+    #info-card { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); max-height: 48dvh; }
+    body:has(#info-card:not(.hidden)) #fab-stack,
+    body:has(#info-card:not(.hidden)) #suggest-btn,
+    .planning-route #fab-stack, .planning-route #suggest-btn { display: none; }
+}
+
+@media (min-width: 701px) {
+    .planning-route #map-site-nav { left: 420px; right: 0; transform: none; justify-content: center; gap: 0; margin: 0 12px; }
+    .planning-route #map-site-nav button { flex-direction: column; gap: 2px; padding: 6px 10px; font-size: 12px; }
+}
+@media (min-width: 701px) and (max-width: 900px) {
+    .planning-route #map-site-nav button { flex: 1; min-width: 0; padding: 6px 2px; font-size: 11px; }
 }

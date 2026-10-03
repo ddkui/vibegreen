@@ -92,7 +92,7 @@
     <link rel="apple-touch-icon" href="logo.png">
 
     <link rel="stylesheet" href="style.css?v=5">
-    <link rel="stylesheet" href="guide.css?v=2">
+    <link rel="stylesheet" href="guide.css?v=4">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
     <!-- Critical: prevents flash of map before stylesheet loads -->
@@ -131,9 +131,9 @@
             <a class="guide-brand" href="index.html" aria-label="Green Luzern home">
                 <img src="logo.png" alt="" width="38" height="38"><span>Green Luzern<span class="brand-sub">A local city guide</span></span>
             </a>
-            <nav aria-label="Main navigation">
+            <nav aria-label="Main navigation"><button data-site-view="home" aria-current="page">Home</button><button data-site-view="map">Map</button>
                 <a href="about.html">About the guide</a>
-                <button id="landing-edu-scroll-btn">Learn</button>
+                <button id="landing-edu-scroll-btn" data-site-view="learn">Learn</button>
             </nav>
         </header>
         <main class="guide-main">
@@ -176,76 +176,76 @@
                 <!-- Injected via JS for better control, but here's the structure -->
                 <button type="button" class="sdg-grid-item" data-goal="1" aria-label="Learn about Goal 1">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/1.png" alt="Goal 1">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="2" aria-label="Learn about Goal 2">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/2.png" alt="Goal 2">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="3" aria-label="Learn about Goal 3">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/3.png" alt="Goal 3">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="4" aria-label="Learn about Goal 4">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/4.png" alt="Goal 4">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="5" aria-label="Learn about Goal 5">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/5.png" alt="Goal 5">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="6" aria-label="Learn about Goal 6">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/6.png" alt="Goal 6">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="7" aria-label="Learn about Goal 7">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/7.png" alt="Goal 7">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="8" aria-label="Learn about Goal 8">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/8.png" alt="Goal 8">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="9" aria-label="Learn about Goal 9">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/9.png" alt="Goal 9">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="10" aria-label="Learn about Goal 10">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/10.png" alt="Goal 10">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="11" aria-label="Learn about Goal 11">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/11.png" alt="Goal 11">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="12" aria-label="Learn about Goal 12">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/12.png" alt="Goal 12">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="13" aria-label="Learn about Goal 13">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/13.png" alt="Goal 13">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="14" aria-label="Learn about Goal 14">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/14.png" alt="Goal 14">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="15" aria-label="Learn about Goal 15">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/15.png" alt="Goal 15">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="16" aria-label="Learn about Goal 16">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/16.png" alt="Goal 16">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
                 <button type="button" class="sdg-grid-item" data-goal="17" aria-label="Learn about Goal 17">
                     <img src="https://open-sdg.github.io/sdg-translations/assets/img/goals/en/17.png" alt="Goal 17">
-                    <div class="sdg-learn-tip">Learn Role →</div>
+                    <div class="sdg-learn-tip">Read the goal →</div>
                 </button>
             </div>
 
             <div class="edu-lessons-wrap">
-                <h3>💡 Quick Lessons</h3>
+                <h3>Quick lessons</h3>
                 <div id="lp-lessons-container" class="lessons-grid">
                     <!-- Same lessons as the modal, but directly here -->
                 </div>
@@ -266,7 +266,7 @@
                     <i class="ph-bold ph-trophy"></i>
                     <div>
                         <h4>Ready to test your memory?</h4>
-                        <p>Memorize the map and prove you know Green Luzern's sustainable spots!</p>
+                        <p>Study five places for 90 seconds, then try recalling their names.</p>
                     </div>
                     <button id="guide-start-game-btn" class="primary-btn">Start Eco Challenge</button>
                 </div>
@@ -297,63 +297,6 @@
                 <p class="footer-cr">© 2026 Green Luzern · Luzern, Switzerland</p>
             </div>
         </footer>
-    </div>
-
-    <!-- SDG Lesson Modal -->
-    <div id="sdg-lesson-modal" class="modal-overlay hidden">
-        <div class="modal-content sdg-lesson-content">
-            <div class="sdg-lesson-header">
-                <div class="sdg-lesson-brand">
-                    <img id="sdg-lesson-icon" src="" alt="SDG Icon">
-                    <div class="sdg-lesson-titles">
-                        <span id="sdg-lesson-num">Goal 0</span>
-                        <h2 id="sdg-lesson-title">Title</h2>
-                    </div>
-                </div>
-                <button id="sdg-lesson-close" class="icon-btn"><i class="ph-bold ph-x"></i></button>
-            </div>
-            <div class="sdg-lesson-body">
-                <div class="lesson-role-box highlight-box role-box">
-                    <div class="box-text">
-                        <h4>🌎 The Global Role</h4>
-                        <p id="sdg-lesson-role">How this goal shapes our future.</p>
-                    </div>
-                </div>
-                <div class="lesson-fact-box highlight-box">
-                    <div class="box-text">
-                        <h4>💡 Fun Fact</h4>
-                        <p id="sdg-lesson-fact">Fact goes here.</p>
-                    </div>
-                </div>
-                <div class="lesson-action-box highlight-box">
-                    <div class="box-text">
-                        <h4>🎯 Make an Impact</h4>
-                        <p id="sdg-lesson-action">Action goes here.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="edu-close-action" id="sdg-lesson-complete-btn">Got it! (+1 Streak)</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Onboarding Screen (shown on "Start Exploring" click) -->
-    <div id="onboarding-screen" class="hidden">
-        <!-- Spinner phase -->
-        <div id="ob-spinner-wrap">
-            <div class="ob-ring ob-ring-outer"></div>
-            <div class="ob-ring ob-ring-inner"></div>
-            <img src="logo.png" alt="" class="ob-logo">
-        </div>
-        <p id="ob-tip" class="ob-tip"></p>
-
-        <!-- Welcome phase (hidden until spinner done) -->
-        <div id="ob-welcome" class="hidden">
-            <div class="ob-check">✓</div>
-            <h2 class="ob-welcome-title">Welcome to Green Luzern!</h2>
-            <p class="ob-welcome-sub">Happy exploring 🌱</p>
-        </div>
     </div>
 
     <!-- Map -->
@@ -419,16 +362,24 @@
             </div>
             <div class="sidebar-divider"></div>
             <div class="sidebar-links">
-                <a href="#" class="sidebar-link" id="sidebar-edu-btn"><i class="ph ph-graduation-cap"></i>
-                    Sustainability Guide</a>
-                <a href="about.html" class="sidebar-link" target="_blank"><i class="ph ph-info"></i> About Green
+                <button type="button" class="sidebar-link" id="sidebar-edu-btn"><i class="ph ph-graduation-cap"></i>
+                    Sustainability Guide</button>
+                <a href="about.html" class="sidebar-link"><i class="ph ph-info"></i> About Green
                     Luzern</a>
-                <a href="privacy.html" class="sidebar-link" target="_blank"><i class="ph ph-shield-check"></i> Privacy
+                <a href="privacy.html" class="sidebar-link"><i class="ph ph-shield-check"></i> Privacy
                     Policy</a>
-                <a href="#" class="sidebar-link" id="settings-btn"><i class="ph ph-gear"></i> Settings</a>
+                <button type="button" class="sidebar-link" id="settings-btn"><i class="ph ph-gear"></i> Settings</button>
             </div>
         </div>
     </div>
+
+    <nav id="map-site-nav" aria-label="Main navigation">
+        <button data-site-view="home"><i class="ph ph-house" aria-hidden="true"></i><span>Home</span></button>
+        <button data-site-view="map"><i class="ph ph-map-trifold" aria-hidden="true"></i><span>Map</span></button>
+        <button data-site-view="learn"><i class="ph ph-book-open" aria-hidden="true"></i><span>Learn</span></button>
+        <button data-site-view="directions"><i class="ph ph-path" aria-hidden="true"></i><span>Directions</span></button>
+        <button id="site-menu-btn" aria-label="Open map menu" aria-expanded="false"><i class="ph ph-list" aria-hidden="true"></i><span>Menu</span></button>
+    </nav>
 
     <!-- Directions Panel (Google Maps style overlay) -->
     <div id="directions-panel" class="hidden">
@@ -466,15 +417,15 @@
             <!-- Mode Tabs (Google Maps style) -->
             <button id="dir-use-location" class="dir-location-button">Use your location</button>
             <div class="dir-modes">
-                <button class="dir-mode-tab active" data-mode="driving" aria-label="Driving routes">
+                <button class="dir-mode-tab active" data-mode="driving" aria-pressed="true" aria-label="Driving routes">
                     <i class="ph-bold ph-car"></i>
                     <span class="mode-eta" id="eta-driving">—</span>
                 </button>
-                <button class="dir-mode-tab" data-mode="cycling" aria-label="Cycling routes">
+                <button class="dir-mode-tab" data-mode="cycling" aria-pressed="false" aria-label="Cycling routes">
                     <i class="ph-bold ph-bicycle"></i>
                     <span class="mode-eta" id="eta-cycling">—</span>
                 </button>
-                <button class="dir-mode-tab" data-mode="walking" aria-label="Walking routes">
+                <button class="dir-mode-tab" data-mode="walking" aria-pressed="false" aria-label="Walking routes">
                     <i class="ph-bold ph-person-simple-walk"></i>
                     <span class="mode-eta" id="eta-walking">—</span>
                 </button>
@@ -528,7 +479,7 @@
     <div id="layers-panel" class="hidden">
         <div class="layers-header">
             <h3>Map type</h3>
-            <button id="layers-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+            <button id="layers-close-btn" class="icon-btn" aria-label="Close map layers"><i class="ph-bold ph-x"></i></button>
         </div>
         <div class="layers-grid">
             <button class="layer-card active" data-style="light">
@@ -542,19 +493,6 @@
         </div>
     </div>
 
-    <!-- Featured Locations Carousel -->
-    <div id="featured-carousel" class="hidden">
-        <button id="fc-close-btn" class="fc-control-btn" title="Close" aria-label="Close"><i class="ph-bold ph-x"></i></button>
-        <button id="fc-pause-btn" class="fc-control-btn" title="Pause/Play" aria-label="Pause/Play"><i class="ph-bold ph-pause"></i></button>
-        <button id="fc-prev-btn" class="fc-nav-btn prev"><i class="ph-bold ph-caret-left"></i></button>
-        <button id="fc-next-btn" class="fc-nav-btn next"><i class="ph-bold ph-caret-right"></i></button>
-        <!-- Cards injected via JS -->
-    </div>
-
-    <!-- Show Carousel FAB -->
-    <button id="fc-show-btn" class="fab hidden" title="Show featured spots" aria-label="Show featured spots">
-        <i class="ph-bold ph-play"></i>
-    </button>
     <!-- Zoom Controls -->
     <div id="zoom-controls">
         <button id="zoom-in-btn" class="zoom-btn" title="Zoom in" aria-label="Zoom in"><i class="ph-bold ph-plus"></i></button>
@@ -569,6 +507,7 @@
                 <button id="info-card-close" class="icon-btn" aria-label="Close place details"><i class="ph-bold ph-x"></i></button>
             </div>
             <p id="info-card-subtitle" class="info-subtitle">—</p>
+            <p id="info-description" hidden></p>
             <div id="info-sdg-container" class="info-sdg-row"></div>
             <div class="info-card-actions">
                 <button class="info-action" id="info-directions-btn">
@@ -594,26 +533,6 @@
     <!-- Toast -->
     <div id="toast-container"></div>
 
-    <!-- About Modal -->
-    <div id="about-modal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>About Green Luzern</h2>
-                <button id="about-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
-            </div>
-            <div class="modal-body">
-                <h3>Discover the sustainable side of the city</h3>
-                <p>Green Luzern is your dedicated interactive guide to finding eco-friendly, sustainable, and local
-                    businesses in and around Lucerne, Switzerland.</p>
-                <p>Whether you are looking for vegan dining, zero-waste shopping, eco-hotels, or practical stops like EV
-                    charging stations and bike rentals, our map makes it effortless to navigate the green best of the
-                    region.</p>
-                <p>Join us in promoting Swisstainable tourism and supporting local initiatives that make a positive
-                    impact on our environment.</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Suggest a Spot FAB -->
     <button id="suggest-btn" title="Suggest a sustainable spot" aria-label="Suggest a sustainable spot">
         <i class="ph-bold ph-plus"></i>
@@ -625,7 +544,7 @@
         <div class="modal-content suggest-modal-content">
             <div class="modal-header">
                 <h2>🌱 Suggest a Sustainable Spot</h2>
-                <button id="suggest-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+                <button id="suggest-close-btn" class="icon-btn" aria-label="Close suggestion form"><i class="ph-bold ph-x"></i></button>
             </div>
             <div class="modal-body">
                 <p class="suggest-intro">Know a great eco-friendly place that's missing from our map? Share it with the
@@ -678,8 +597,8 @@
     <div id="settings-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ Settings</h2>
-                <button id="settings-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+                <h2>Settings</h2>
+                <button id="settings-close-btn" class="icon-btn" aria-label="Close settings"><i class="ph-bold ph-x"></i></button>
             </div>
             <div class="modal-body settings-body">
                 <div class="settings-group">
@@ -701,10 +620,16 @@
                 <div class="settings-group danger-zone">
                     <label>Data Management</label>
                     <p class="st-desc">This will erase your visited spots, current eco-score, and daily streaks from
-                        this device.</p>
+                        this device. Saved places and read lessons are kept.</p>
                     <button class="st-danger-btn" id="st-reset-data">
-                        <i class="ph-bold ph-trash"></i> Reset My Data
+                        <i class="ph-bold ph-trash"></i> Reset Visit Progress
                     </button>
+                    <div id="reset-confirmation" hidden>
+                        <p>Reset visited places, streaks and daily challenges on this device?</p>
+                        <button id="reset-cancel" class="st-btn">Keep my progress</button>
+                        <button id="reset-confirm" class="st-danger-btn">Reset progress</button>
+                    </div>
+                    <button id="reset-undo" class="st-btn" hidden>Undo reset</button>
                 </div>
             </div>
         </div>
@@ -715,7 +640,7 @@
         <div class="modal-content edu-modal-content">
             <div class="modal-header">
                 <h2>🌎 Sustainability Guide</h2>
-                <button id="edu-close-btn" class="icon-btn"><i class="ph-bold ph-x"></i></button>
+                <button id="edu-close-btn" class="icon-btn" aria-label="Close learning guide"><i class="ph-bold ph-x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="edu-section">
@@ -728,9 +653,6 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-        </div>
 
         <div class="edu-divider"></div>
 
@@ -784,7 +706,7 @@
     <div id="lesson-page" class="hidden">
         <div class="lesson-page-nav">
             <button id="lesson-page-back" class="icon-btn"><i class="ph ph-arrow-left"></i> Back to Guide</button>
-            <div class="lesson-page-brand">Global Goals Deep-Dive</div>
+            <div class="lesson-page-brand">A short guide to the global goals</div>
         </div>
 
         <div class="lesson-page-container">
@@ -794,7 +716,7 @@
                     <img id="lp-goal-icon" src="" alt="Goal Icon">
                     <div class="lp-hero-titles">
                         <span id="lp-goal-num">Goal 11</span>
-                        <h1 id="lp-goal-title">Sustainable Cities</h1>
+                        <h1 id="lp-goal-title">Sustainable Cities</h1><a id="lp-un-source" href="https://sdgs.un.org/goals/goal11" target="_blank" rel="noopener noreferrer">Read the UN goal ↗</a>
                     </div>
                 </div>
             </header>
@@ -858,7 +780,7 @@
                         <p id="lp-goal-action"></p>
                     </div>
                     <div class="lp-action-footer">
-                        <button id="lp-complete-btn">🎯 Mark Lesson Complete</button>
+                        <button id="lp-complete-btn">Mark as read</button>
                     </div>
                 </section>
             </main>
@@ -867,10 +789,10 @@
 
     <!-- Eco Challenge Game: Start/Memorize/Results Modal -->
     <div id="game-modal" class="hidden">
-        <div class="game-modal-card">
+        <div class="game-modal-card"><button id="game-cancel-btn" class="icon-btn" aria-label="Close memory challenge"><i class="ph ph-x" aria-hidden="true"></i></button>
             <div id="game-intro-view">
                 <h2>Eco Memory Challenge</h2>
-                <p>You have <strong>5 minutes</strong> to memorize all sustainable locations marked on the map. After that, they will disappear, and you'll have to name them from memory!</p>
+                <p>Explore five places on the map for 90 seconds, then see how many names you remember. You can finish studying or leave at any time.</p>
                 <button id="game-start-btn" class="primary-btn" style="width:100%">Start Challenge</button>
             </div>
             
@@ -887,6 +809,11 @@
         </div>
     </div>
 
+    <div id="game-timer-bar" role="region" aria-label="Memory challenge">
+        <span id="game-phase-label">Study</span><span id="game-countdown">01:30</span>
+        <button id="game-ready-btn">Finish studying</button><button id="game-study-exit">Leave challenge</button>
+    </div>
+
     <!-- Recall Interface (Bottom Panel) -->
     <div id="game-recall-panel" class="hidden">
         <h3>Memory Test</h3>
@@ -897,8 +824,9 @@
         <button id="game-submit-btn" class="primary-btn" style="width:100%">Submit Final Answers</button>
     </div>
 
+    <script src="navigation.js?v=1"></script>
     <script src="routing.js?v=1"></script>
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=10"></script>
     <script src="landing-motion.js?v=1"></script>
 </body>
 
