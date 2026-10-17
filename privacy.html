@@ -8,9 +8,9 @@
     <meta name="description" content="Green Luzern Privacy Policy — how we handle your data and location information.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pages.css?v=1">
     <!-- Override the map app's full-screen body lockout -->
     <style>
         html,
@@ -22,7 +22,7 @@
         body {
             background-color: var(--bg-base);
             color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font);
             line-height: 1.6;
             margin: 0;
             padding: 0;
@@ -156,6 +156,7 @@
             text-decoration: underline;
         }
     </style>
+    <link rel="stylesheet" href="guide.css?v=7">
 </head>
 
 <body>
@@ -163,21 +164,17 @@
     <!-- Header -->
     <header class="page-header">
         <a href="index.html" class="logo">Green Luzern</a>
-        <a href="index.html" class="back-btn">
-            <i class="ph ph-arrow-left"></i> Back to Map
-        </a>
+        <nav class="page-navigation" aria-label="Main navigation"><a href="index.html#home">Home</a><a href="index.html#map">Map</a><a href="index.html#learn">Learn</a></nav>
     </header>
 
     <!-- Content -->
     <main class="container">
 
         <div class="page-title">Privacy Policy</div>
-        <div class="last-updated">Last Updated: March 2026</div>
+        <div class="last-updated">Last Updated: October 2026</div>
 
         <div class="highlight-box">
-            <strong>The short version:</strong> Green Luzern does not collect, store, or sell your personal data. Your
-            location is only ever used locally on your device to calculate directions. We use no advertising trackers or
-            cookies.
+            <strong>The short version:</strong> You can browse and plan routes without an account or GPS permission. Map and route providers receive the requests needed to display places and calculate directions. Saved places and preferences stay in your browser. Suggestions are sent to the guide for review. We use no advertising trackers.
         </div>
 
         <h2>1. Introduction</h2>
@@ -187,8 +184,7 @@
 
         <h2>2. Information We Collect</h2>
         <p><strong>Location Data:</strong> If you grant permission, Green Luzern briefly accesses your device's
-            geolocation (GPS) when you click "Directions" or "Locate Me". This data is processed locally within your
-            browser and sent directly to our open-source routing provider (OSRM) solely to calculate your route.
+            geolocation (GPS) when you choose "Use your location", "Your location", or start live navigation. Selected route endpoints are sent to Valhalla / FOSSGIS to calculate directions; rerouting sends the current position during navigation.
             <strong>We do not store, log, harvest, or track your physical location on any servers we own or
                 operate.</strong></p>
         <p><strong>Local Storage:</strong> We use your browser's <code>localStorage</code> to save your preferences
@@ -202,10 +198,12 @@
             open-source services. These services operate under their own independent privacy policies and may log
             anonymous web traffic data (such as IP addresses) when serving content to your browser:</p>
         <ul>
+            <li><a href="https://openfreemap.org/privacy/" target="_blank">OpenFreeMap</a> — Vector map tiles, labels, and map styling</li>
             <li><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank">OpenStreetMap
                     Foundation</a> — Map tiles and geographic data</li>
-            <li><a href="http://project-osrm.org/" target="_blank">OSRM (Open Source Routing Machine)</a> — Route
-                calculation engine</li>
+            <li><a href="https://valhalla.openstreetmap.de/" target="_blank" rel="noopener noreferrer">Valhalla / FOSSGIS</a> — Car, bicycle, and pedestrian routing. Route requests send the selected start and destination coordinates to this service; rerouting sends the current position when navigation is active.</li>
+            <li><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank" rel="noopener noreferrer">Nominatim</a> — Address searches and reverse lookup of selected map coordinates</li>
+            <li><a href="https://www.esri.com/en-us/privacy/overview" target="_blank" rel="noopener noreferrer">Esri</a> — Satellite imagery, when selected</li>
             <li><a href="https://leafletjs.com/" target="_blank">Leaflet.js</a> — Open-source mapping library (runs
                 fully in your browser)</li>
         </ul>
@@ -216,18 +214,13 @@
             brokers.</p>
 
         <h2>5. Data Sharing</h2>
-        <p>We do not sell, rent, or share your personal data with any third parties for commercial purposes. The only
-            data transmission that occurs is between your browser and the open-source map tile and routing servers
-            listed above, which is necessary to display the map and calculate directions.</p>
+        <p>We do not sell, rent, or share your personal data with any third parties for commercial purposes. Your browser sends requests to map, address-search and routing providers. If you submit a suggested place, its details and any optional name you enter are sent to our submission service for review.</p>
 
         <h2>6. Your Rights</h2>
-        <p>Since we do not store personal data, there is nothing for us to delete or correct on our end. If you wish to
-            clear any locally stored preferences, you may clear your browser's local storage at any time through your
-            browser's developer tools or settings.</p>
+        <p>You can reset visit progress in Settings and remove saved places using their Save buttons. Clearing this site's browser storage removes all preferences, saved places and read lessons. For questions about a submitted suggestion, contact the Green Luzern team.</p>
 
-        <h2>7. Your Consent</h2>
-        <p>By using Green Luzern, you consent to this Privacy Policy. Refusing location permissions will disable the
-            routing functionality, but all other map features remain fully accessible without sharing any location data.
+        <h2>7. Location Permission</h2>
+        <p>You choose whether to grant device location permission. Without it you can browse the guide and plan routes using named starting points and destinations. GPS tracking and live rerouting require location permission.
         </p>
 
         <h2>8. Changes to This Policy</h2>
@@ -243,7 +236,7 @@
     <footer class="page-footer">
         <p>&copy; 2026 Green Luzern &mdash; All rights reserved &middot;
             <a href="about.html">About</a> &middot;
-            <a href="index.html">Back to Map</a>
+            <a href="index.html#map">Back to Map</a>
         </p>
     </footer>
 

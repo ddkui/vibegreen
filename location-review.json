@@ -1,0 +1,903 @@
+{
+  "reviewedAt": "2026-10-03",
+  "legacyCount": 75,
+  "publishedCount": 32,
+  "entries": [
+    {
+      "id": "karls-kraut",
+      "name": "Karls Kraut",
+      "legacyAddress": "St. Karliquai 7, 6004 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Fully plant-based menu; seasonal and regional sourcing.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.karlskraut.ch/ueber-uns"
+        }
+      ]
+    },
+    {
+      "id": "tibits",
+      "name": "Tibits Luzern",
+      "legacyAddress": "Zentralstrasse 1, 6003 Luzern (Level 1 Train Station)",
+      "decision": "retained / corrected",
+      "reason": "Vegetarian restaurant with vegan dishes.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.tibits.ch/de/restaurants/standorte"
+        }
+      ]
+    },
+    {
+      "id": "veganitas",
+      "name": "Veganitas",
+      "legacyAddress": "Zentralstrasse 1, 6003 Luzern (Train Station level -1)",
+      "decision": "retained / corrected",
+      "reason": "100% plant-based food.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.veganitas.com/about"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.veganitas.com/contact-us"
+        }
+      ]
+    },
+    {
+      "id": "bayts",
+      "name": "BAYTS Bistro & Bar",
+      "legacyAddress": "Bruchstrasse 45, 6003 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Fully plant-based, seasonal menu.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.bayts.ch/"
+        }
+      ]
+    },
+    {
+      "id": "unverpackt",
+      "name": "Unverpackt Luzern",
+      "legacyAddress": "Bundesplatz 10, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "A 2018 local environmental-advice report documents closure of the original shop; no current evidence supports the claimed Bundesplatz listing.",
+      "sources": []
+    },
+    {
+      "id": "prima-natura",
+      "name": "Prima Natura",
+      "legacyAddress": "Bruchstrasse 35, 6003 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Organic-food shop; no packaging-free claim.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.biopartner.ch/de/shopfinder"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.prima-natura.ch/"
+        }
+      ]
+    },
+    {
+      "id": "schweizerhof",
+      "name": "Hotel Schweizerhof Luzern",
+      "legacyAddress": "Schweizerhofquai, 6002 Luzern",
+      "decision": "retained / corrected",
+      "reason": "ISO 14001; Swisstainable Level III — leading.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.schweizerhof-luzern.ch/hotel-schweizerhof-luzern/nachhaltigkeit"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.schweizerhof-luzern.ch/en/contact"
+        }
+      ]
+    },
+    {
+      "id": "grand-hotel-national",
+      "name": "Grand Hotel National",
+      "legacyAddress": "Haldenstrasse 4, 6006 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level II — engaged.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.grandhotel-national.com/"
+        }
+      ]
+    },
+    {
+      "id": "hermitage",
+      "name": "HERMITAGE Lake Lucerne",
+      "legacyAddress": "Seeburgstrasse 72, 6006 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level II — engaged; Wasser für Wasser.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.hermitage.ch/fr/durabilite"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.hermitage.ch/"
+        }
+      ]
+    },
+    {
+      "id": "ms-diamant",
+      "name": "MS Diamant (Lake Lucerne Navigation)",
+      "legacyAddress": "Werftstrasse 667, 6005 Luzern (Departure Point)",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kkl-luzern",
+      "name": "KKL Luzern",
+      "legacyAddress": "Europaplatz 1, 6005 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level III — leading; published operational measures.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.kkl-luzern.ch/ueber-uns/nachhaltigkeit"
+        }
+      ]
+    },
+    {
+      "id": "ali-baba-vintage",
+      "name": "Ali Baba Vintage",
+      "legacyAddress": "Weggisgasse 25, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "tootsies-secondhand",
+      "name": "Tootsies Second Hand",
+      "legacyAddress": "Kauffmannweg 8, 6003 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Resale keeps clothing in use.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.tootsies.ch/"
+        }
+      ]
+    },
+    {
+      "id": "the-secondhand",
+      "name": "The Secondhand",
+      "legacyAddress": "Bruchstrasse 45, 6003 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Buys and resells pre-owned clothing.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.thesecondhand.ch/"
+        }
+      ]
+    },
+    {
+      "id": "ev-messe-allmend",
+      "name": "EV Charging - Messe Allmend",
+      "legacyAddress": "Horwerstrasse 89, 6005 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "ev-adligenswilerstrasse",
+      "name": "EV Charging - Adligenswilerstrasse",
+      "legacyAddress": "Adligenswilerstrasse 22, 6006 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "ev-bahnhof",
+      "name": "EV Charging - Train Station",
+      "legacyAddress": "Bahnhofplatz 1, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "bike-kkl",
+      "name": "Nextbike Station - KKL",
+      "legacyAddress": "Europaplatz 1, 6005 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "bike-loewenplatz",
+      "name": "Nextbike Station - Löwenplatz",
+      "legacyAddress": "Löwenplatz, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "bike-bahnhof",
+      "name": "Nextbike Station - Bahnhof",
+      "legacyAddress": "Bahnhofplatz, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "swisstainable-flora",
+      "name": "AMERON Luzern Hotel Flora",
+      "legacyAddress": "Seidenhofstrasse 5, 6002 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level III — leading.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.ameroncollection.com/de/luzern-hotel-flora"
+        }
+      ]
+    },
+    {
+      "id": "swisstainable-glacier",
+      "name": "Glacier Garden Lucerne",
+      "legacyAddress": "Denkmalstrasse 4, 6006 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level I — committed; programme participation.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://gletschergarten.ch/de/besuch/besucherinfos/anreise"
+        }
+      ]
+    },
+    {
+      "id": "swisstainable-stadtkeller",
+      "name": "Stadtkeller Restaurant",
+      "legacyAddress": "Sternenplatz 3, 6004 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level I — committed; programme participation.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.stadtkeller.ch/"
+        }
+      ]
+    },
+    {
+      "id": "neubad",
+      "name": "Neubad Luzern",
+      "legacyAddress": "Bireggstrasse 36, 6003 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Building reuse; seasonal vegetarian and vegan meals.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.luzern.com/de/gastro/neubad-luzern"
+        }
+      ]
+    },
+    {
+      "id": "treibhaus",
+      "name": "Treibhaus Luzern",
+      "legacyAddress": "Spelteriniweg 4, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "lucerne-festival",
+      "name": "Lucerne Festival",
+      "legacyAddress": "Europaplatz 1, 6005 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level II — engaged.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.lucernefestival.ch/en/en/causewecare"
+        }
+      ]
+    },
+    {
+      "id": "seebad-luzern",
+      "name": "Seebad Luzern",
+      "legacyAddress": "Nationalquai, 6006 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "lido-luzern",
+      "name": "Lido Luzern",
+      "legacyAddress": "Lidostrasse 6a, 6006 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "strandbad-tribschen",
+      "name": "Strandbad Tribschen",
+      "legacyAddress": "Tribschenstrasse, 6005 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "waldbad-zimmeregg",
+      "name": "Waldbad Zimmeregg",
+      "legacyAddress": "Zimmereggstrasse, 6015 Luzern Reussbühl",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "plant-luzern",
+      "name": "Plant Luzern",
+      "legacyAddress": "Pilatusstrasse 26, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "sentitreff",
+      "name": "Sentitreff",
+      "legacyAddress": "Baselstrasse 21, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "gartenhaus",
+      "name": "gartenHAUS",
+      "legacyAddress": "Lindenstrasse 21, 6015 Luzern Reussbühl",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "cafe-voliere",
+      "name": "Café Bar Volière",
+      "legacyAddress": "Inseliquai, 6005 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "pinakarri",
+      "name": "Pinakarri",
+      "legacyAddress": "Hertensteinstrasse 22, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "alnatura-luzern",
+      "name": "Alnatura Bio Super Markt",
+      "legacyAddress": "Pilatusstrasse 4, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "oakberry",
+      "name": "OAKBERRY Açaí",
+      "legacyAddress": "Hertensteinstrasse 4, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "bhms",
+      "name": "BHMS Business & Hotel Management School",
+      "legacyAddress": "Gütschstrasse 2-6, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kriens-velo",
+      "name": "Veloplus Kriens",
+      "legacyAddress": "Horwerstrasse 63, 6010 Kriens",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kriens-biometzgerei",
+      "name": "Biometzgerei Stutz",
+      "legacyAddress": "Luzernstrasse 6, 6010 Kriens",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kriens-naturpark",
+      "name": "Natur- & Tierpark Goldau (Access Point)",
+      "legacyAddress": "Steinackerweg, 6010 Kriens",
+      "decision": "withheld",
+      "reason": "A Goldau park was represented as a Kriens access point without supporting evidence; withheld.",
+      "sources": []
+    },
+    {
+      "id": "pilatus-bahn",
+      "name": "Pilatus Bahnen (Krienseregg)",
+      "legacyAddress": "Schlossweg 1, 6010 Kriens",
+      "decision": "retained / corrected",
+      "reason": "Swisstainable Level III — leading.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.pilatus.ch/informieren/anreise-lageplan"
+        }
+      ]
+    },
+    {
+      "id": "horw-biobauernhof",
+      "name": "Biobauernhof Mattenhof",
+      "legacyAddress": "Mattenweidstrasse 12, 6048 Horw",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "horw-ev-charging",
+      "name": "EV Charging – Horw Zentrum",
+      "legacyAddress": "Gemeindezentrum, Horwerstrasse 15, 6048 Horw",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "horw-waldlehrpfad",
+      "name": "Waldlehrpfad Horw",
+      "legacyAddress": "Waldweg, 6048 Horw",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "emmen-secondhand",
+      "name": "Brockenstube Emmen",
+      "legacyAddress": "Gerliswilstrasse 90, 6020 Emmenbrücke",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "emmen-coop-bio",
+      "name": "Coop Naturaplan Hub – Emmen Center",
+      "legacyAddress": "Seetalstrasse 3, 6020 Emmenbrücke",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "emmen-ev-station",
+      "name": "EV Charging – Emmen Parkhaus City",
+      "legacyAddress": "Gerliswilstrasse 23, 6020 Emmenbrücke",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "meggen-bio-laden",
+      "name": "Dämmerhüsli Bio & Deli",
+      "legacyAddress": "Seestrasse 27, 6045 Meggen",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "meggen-seebadi",
+      "name": "Seebad Meggen",
+      "legacyAddress": "Seestrasse 82, 6045 Meggen",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "ebikon-velostation",
+      "name": "Nextbike Station – Ebikon Mall",
+      "legacyAddress": "Luzerner Strasse 21, 6030 Ebikon",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "ebikon-swisstainable-hotel",
+      "name": "Seedamm Plaza Ebikon",
+      "legacyAddress": "Seedammstrasse 3, 6030 Ebikon",
+      "decision": "withheld",
+      "reason": "The Seedamm Plaza entry was placed in Ebikon without verified local venue evidence; withheld.",
+      "sources": []
+    },
+    {
+      "id": "kussnacht-rigi",
+      "name": "Rigi Bahnen (Küssnacht Access)",
+      "legacyAddress": "Bahnhofstrasse 8, 6403 Küssnacht am Rigi",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kussnacht-vegan-cafe",
+      "name": "Café Bunt Küssnacht",
+      "legacyAddress": "Hauptstrasse 12, 6403 Küssnacht am Rigi",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "kussnacht-ev",
+      "name": "EV Charging – Küssnacht Bahnhof",
+      "legacyAddress": "Bahnhofplatz, 6403 Küssnacht am Rigi",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "adligenswil-biomarkt",
+      "name": "Bio Hofladen Adligenswil",
+      "legacyAddress": "Dorfstrasse 14, 6043 Adligenswil",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "malters-biobauern",
+      "name": "Biobauernhof Burg",
+      "legacyAddress": "Burgweg 4, 6022 Malters",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "malters-e-bike",
+      "name": "E-Bike Trail Malters–Littau",
+      "legacyAddress": "Start: Dorfplatz, 6022 Malters",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "rothenburg-recyclinghof",
+      "name": "Recyclinghof Rothenburg",
+      "legacyAddress": "Industriestrasse 10, 6023 Rothenburg",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "sursee-vegan-restaurant",
+      "name": "Restaurant Rössli Sursee",
+      "legacyAddress": "Unterstadt 5, 6210 Sursee",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "sursee-bike-station",
+      "name": "Nextbike Station – Sursee Bahnhof",
+      "legacyAddress": "Bahnhofstrasse 1, 6210 Sursee",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "sempachersee",
+      "name": "Sempachersee Naturschutzgebiet",
+      "legacyAddress": "Naturzentrum, Irensbühlstrasse, 6204 Sempach",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "sursee-swisstainable",
+      "name": "Hotel Krone Sursee",
+      "legacyAddress": "Hauptgasse 15, 6210 Sursee",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "wolhusen-metzgerei",
+      "name": "Metzgerei Bühler Wolhusen",
+      "legacyAddress": "Luzernstrasse 8, 6110 Wolhusen",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "risch-zugersee-badi",
+      "name": "Badeanstalt Chiemen",
+      "legacyAddress": "Chiemenstrasse, 6343 Rotkreuz",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-fritschi",
+      "name": "Fritschibrunnen",
+      "legacyAddress": "Kapellplatz, 6004 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Public bottle-refill point identified in the city guide.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.stadtluzern.ch/_docn/5020288/neu_Brunnenbroschuere_2022_2Aufl2024_WEB.pdf"
+        }
+      ]
+    },
+    {
+      "id": "brunnen-weinmarkt",
+      "name": "Weinmarktbrunnen",
+      "legacyAddress": "Weinmarkt, 6004 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Public bottle-refill point identified in the city guide.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.stadtluzern.ch/_docn/5020288/neu_Brunnenbroschuere_2022_2Aufl2024_WEB.pdf"
+        }
+      ]
+    },
+    {
+      "id": "brunnen-rathaus",
+      "name": "Rathausbrunnen (Kornmarkt)",
+      "legacyAddress": "Kornmarkt, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-hirschenplatz",
+      "name": "Hirschenplatzbrunnen",
+      "legacyAddress": "Hirschenplatz, 6004 Luzern",
+      "decision": "retained / corrected",
+      "reason": "Public bottle-refill point identified in the city guide.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.stadtluzern.ch/_docn/5020288/neu_Brunnenbroschuere_2022_2Aufl2024_WEB.pdf"
+        }
+      ]
+    },
+    {
+      "id": "brunnen-loewenplatz",
+      "name": "Löwenplatzbrunnen",
+      "legacyAddress": "Löwenplatz, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-schwanenplatz",
+      "name": "Schwanenplatzbrunnen",
+      "legacyAddress": "Schwanenplatz, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-muehleplatz",
+      "name": "Mühlenplatzbrunnen",
+      "legacyAddress": "Mühlenplatz, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-bahnhofplatz",
+      "name": "Trinkwasserbrunnen Bahnhofplatz",
+      "legacyAddress": "Bahnhofplatz, 6003 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-rathausquai",
+      "name": "Rathausquai-Brunnen",
+      "legacyAddress": "Rathausquai, 6004 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "brunnen-inseli",
+      "name": "Inseli Park Trinkbrunnen",
+      "legacyAddress": "Inseliquai, Inseli Park, 6005 Luzern",
+      "decision": "withheld",
+      "reason": "Current sustainability evidence and reliable placement not established; pending review. No claim that this business is closed or unsustainable.",
+      "sources": []
+    },
+    {
+      "id": "waerchbrogg-alpenquai",
+      "name": "Wärchbrogg Markt Alpenquai",
+      "decision": "added",
+      "reason": "Packaging-free refill shopping.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.waerchbrogg.ch/detailhandel/verpackungsfrei-einkaufen/"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.waerchbrogg.ch/detailhandel/markt-alpenquai/"
+        }
+      ]
+    },
+    {
+      "id": "brocki-kriens",
+      "name": "Heilsarmee brocki.ch Kriens",
+      "decision": "added",
+      "reason": "Reuse through resale of donated goods.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.brocki.ch/de/filialen/kriens/"
+        }
+      ]
+    },
+    {
+      "id": "second-chance-emmen",
+      "name": "Second Chance Emmenbrücke",
+      "decision": "added",
+      "reason": "Resale, repair and upcycling.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://caritas-regio.ch/ueber-caritas/zentralschweiz/second-chance"
+        }
+      ]
+    },
+    {
+      "id": "second-chance-sursee",
+      "name": "Second Chance im Städtli Sursee",
+      "decision": "added",
+      "reason": "Keeps clothing and household goods in use.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://caritas-regio.ch/ueber-caritas/zentralschweiz/news/second-chance-im-staedtli-sursee-ist-eroeffnet"
+        }
+      ]
+    },
+    {
+      "id": "repair-cafe-bourbaki",
+      "name": "Repair Café Luzern — Bourbaki",
+      "decision": "added",
+      "reason": "Repair instead of disposal.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.repair-cafe-luzern.ch/"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.bourbakipanorama.ch/museum/besuch/"
+        }
+      ]
+    },
+    {
+      "id": "vegitat-luzern",
+      "name": "Vegitat Luzern",
+      "decision": "added",
+      "reason": "Fully vegan food offer.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://vegitat.ch/"
+        }
+      ]
+    },
+    {
+      "id": "sudpol-plant",
+      "name": "Südpol Bistro — plant.",
+      "decision": "added",
+      "reason": "Vegan bistro menu.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.sudpol.ch/on-suedpol/neuer-wind-im-sudpol-mittagsbistro-plant"
+        }
+      ]
+    },
+    {
+      "id": "velostation-luzern",
+      "name": "Velostation Luzern — Rent a Bike",
+      "decision": "added",
+      "reason": "Cycle rental, repairs and bicycle reuse.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://caritas-regio.ch/ueber-caritas/zentralschweiz/velostationen"
+        }
+      ]
+    },
+    {
+      "id": "ewl-verkehrshaus",
+      "name": "ewl charging — Verkehrshaus",
+      "decision": "added",
+      "reason": "Public charging infrastructure; not a carbon-neutrality claim.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.ewl-luzern.ch/energie/e-mobilitaet/oeffentliche-ladestationen"
+        }
+      ]
+    },
+    {
+      "id": "ewl-industriestrasse",
+      "name": "ewl charging — Haupteingang",
+      "decision": "added",
+      "reason": "Public charging infrastructure.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.ewl-luzern.ch/energie/e-mobilitaet/oeffentliche-ladestationen"
+        }
+      ]
+    },
+    {
+      "id": "verkehrshaus",
+      "name": "Verkehrshaus der Schweiz",
+      "decision": "added",
+      "reason": "Swisstainable Level III — leading.",
+      "sources": [
+        {
+          "label": "Programme register",
+          "url": "https://st.stnet.ch/nachhaltigkeit/pages/public/service_provider.jsf"
+        },
+        {
+          "label": "Venue details",
+          "url": "https://www.verkehrshaus.ch/de/anreise"
+        }
+      ]
+    },
+    {
+      "id": "preloved-popup",
+      "name": "Preloved Pop-up Luzern",
+      "decision": "added",
+      "reason": "Resale of pre-owned clothing.",
+      "sources": [
+        {
+          "label": "Evidence source",
+          "url": "https://www.preloved-popup.com/"
+        }
+      ]
+    }
+  ]
+}

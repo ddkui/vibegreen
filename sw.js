@@ -1,48 +1,28 @@
-// Green Luzern — Service Worker for offline support & PWA
-const CACHE_NAME = 'greenluzern-v1';
-const PRECACHE = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/app.js',
-    '/data.js',
-    '/logo.png',
-    '/manifest.json'
-];
-
-// Install: pre-cache critical assets
-self.addEventListener('install', e => {
-    e.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE))
-    );
+// App assets are cache-first within each release; documents remain network-first.
+const CACHE_NAME = 'greenluzern-v10';
+const PRECACHE = ['/', '/index.html', '/about.html', '/privacy.html', '/style.css', '/guide.css', '/pages.css', '/app.js', '/routing.js', '/navigation.js', '/map-loader.js', '/landing-motion.js', '/data.js', '/logo.png', '/manifest.json'];
+self.addEventListener('install', event => {
+    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)));
     self.skipWaiting();
 });
-
-// Activate: clean up old caches
-self.addEventListener('activate', e => {
-    e.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
-    );
+self.addEventListener('activate', event => {
+    event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('greenluzern-') && key !== CACHE_NAME).map(key => caches.delete(key)))));
     self.clients.claim();
 });
-
-// Fetch: network-first with cache fallback
-self.addEventListener('fetch', e => {
-    // Skip non-GET and cross-origin requests
-    if (e.request.method !== 'GET') return;
-
-    e.respondWith(
-        fetch(e.request)
-            .then(res => {
-                // Cache successful same-origin responses
-                if (res.ok && e.request.url.startsWith(self.location.origin)) {
-                    const clone = res.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-                }
-                return res;
-            })
-            .catch(() => caches.match(e.request))
-    );
+self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+    if (event.request.method !== 'GET' || url.origin !== self.location.origin || !PRECACHE.includes(url.pathname)) return;
+    const isDocument = event.request.mode === 'navigate' || /(?:\/|\.html)$/.test(url.pathname);
+    event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(url.pathname);
+        if (!isDocument && cached) return cached;
+        try {
+            const response = await fetch(event.request);
+            if (response.ok) await cache.put(url.pathname, response.clone());
+            return response;
+        } catch {
+            return cached || new Response('This page is unavailable offline.', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+        }
+    })());
 });
