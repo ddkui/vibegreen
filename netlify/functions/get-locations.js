@@ -1,7 +1,6 @@
 // Netlify Function: GET /api/get-locations
-// Returns all approved community-submitted locations from Neon DB
+// Returns all approved community-submitted locations from Supabase
 
-const { neon } = require('@neondatabase/serverless');
 
 exports.handler = async (event) => {
     const headers = {
@@ -10,14 +9,14 @@ exports.handler = async (event) => {
     };
 
     try {
-        const sql = neon(process.env.DATABASE_URL);
-
-        const rows = await sql`
-            SELECT id, name, lat, lng, category, description, address, submitted_by, created_at
-            FROM community_locations
-            WHERE approved = true
-            ORDER BY created_at DESC
-        `;
+        const res = await fetch(
+            `${process.env.SUPABASE_URL}/rest/v1/community_locations` +
+            '?select=id,name,lat,lng,category,description,address,submitted_by,created_at' +
+            '&approved=eq.true&order=created_at.desc',
+            { headers: { apikey: process.env.SUPABASE_ANON_KEY, Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}` } }
+        );
+        if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+        const rows = await res.json();
 
         return {
             statusCode: 200,

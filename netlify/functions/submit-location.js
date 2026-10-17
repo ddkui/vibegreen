@@ -1,8 +1,6 @@
 // Netlify Function: POST /api/submit-location
 // Accepts a new community location submission and stores it as pending review
 
-const { neon } = require('@neondatabase/serverless');
-
 const VALID_CATEGORIES = [
     'vegan', 'zero-waste', 'eco-hotel', 'activity',
     'secondhand', 'ev-charging', 'bike-rental', 'swisstainable', 'drinking-water'
@@ -49,15 +47,26 @@ exports.handler = async (event) => {
         // Sanitise inputs
         const clean = (s) => String(s || '').trim().slice(0, 500);
 
-        const sql = neon(process.env.DATABASE_URL);
-
-        await sql`
-            INSERT INTO community_locations
-                (name, address, lat, lng, category, description, submitted_by, approved, created_at)
-            VALUES
-                (${clean(name)}, ${clean(address)}, ${lat || null}, ${lng || null},
-                 ${category}, ${clean(description)}, ${clean(submitted_by)}, false, NOW())
-        `;
+        const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/community_locations`, {
+            method: 'POST',
+            headers: {
+                apikey: process.env.SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+                Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+                name: clean(name),
+                address: clean(address),
+                lat: lat || null,
+                lng: lng || null,
+                category,
+                description: clean(description),
+                submitted_by: clean(submitted_by),
+                approved: false,
+            }),
+        });
+        if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
 
         return {
             statusCode: 200,
